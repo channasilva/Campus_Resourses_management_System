@@ -4,6 +4,7 @@ import Button from './Button';
 import { Booking, Resource } from '../types';
 import { firebaseService } from '../services/firebase-service';
 import toast from 'react-hot-toast';
+import { formatLocalDateTime } from '../utils/date-utils';
 
 interface BookingDetailsProps {
   isOpen: boolean;
@@ -23,14 +24,6 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen || !booking) return null;
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return {
-      date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -80,8 +73,8 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
            (currentUser.id === booking.userId || currentUser.role?.toLowerCase() === 'admin');
   };
 
-  const startDateTime = formatDateTime(booking.startTime);
-  const endDateTime = formatDateTime(booking.endTime);
+  const startDateTime = formatLocalDateTime(booking.startTime);
+  const endDateTime = formatLocalDateTime(booking.endTime);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -128,18 +121,14 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
               <Calendar className="w-5 h-5 mr-2 text-gray-600" />
               Booking Details
             </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-gray-600">Date</p>
-                <p className="font-medium">{startDateTime.date}</p>
+                <p className="text-gray-500 dark:text-gray-400">Start Date & Time</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{startDateTime}</p>
               </div>
               <div>
-                <p className="text-gray-600">Start Time</p>
-                <p className="font-medium">{startDateTime.time}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">End Time</p>
-                <p className="font-medium">{endDateTime.time}</p>
+                <p className="text-gray-500 dark:text-gray-400">End Date & Time</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{endDateTime}</p>
               </div>
               <div>
                 <p className="text-gray-600">Attendees</p>

@@ -4,6 +4,7 @@ import Button from './Button';
 import Input from './Input';
 import { firebaseService } from '../services/firebase-service';
 import { Booking, Resource } from '../types';
+import { createLocalDateTime, toLocalISOString } from '../utils/date-utils';
 import toast from 'react-hot-toast';
 
 interface BookingModalProps {
@@ -62,13 +63,13 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
     try {
       setCheckingConflicts(true);
-      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
-      const endDateTime = new Date(`${formData.startDate}T${formData.endTime}`);
+      const startDateTime = createLocalDateTime(formData.startDate, formData.startTime);
+      const endDateTime = createLocalDateTime(formData.startDate, formData.endTime);
       
       const foundConflicts = await firebaseService.checkBookingConflicts(
         resource.id,
-        startDateTime.toISOString(),
-        endDateTime.toISOString()
+        toLocalISOString(startDateTime),
+        toLocalISOString(endDateTime)
       );
       
       setConflicts(foundConflicts);
@@ -132,15 +133,16 @@ const BookingModal: React.FC<BookingModalProps> = ({
     setIsLoading(true);
 
     try {
-      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
-      const endDateTime = new Date(`${formData.startDate}T${formData.endTime}`);
+      // Create dates in local timezone to avoid timezone shifts
+      const startDateTime = createLocalDateTime(formData.startDate, formData.startTime);
+      const endDateTime = createLocalDateTime(formData.startDate, formData.endTime);
 
       // Check for booking conflicts before creating the booking
       console.log('🔍 Checking for booking conflicts...');
       const conflicts = await firebaseService.checkBookingConflicts(
         resource.id,
-        startDateTime.toISOString(),
-        endDateTime.toISOString()
+        toLocalISOString(startDateTime),
+        toLocalISOString(endDateTime)
       );
       
       if (conflicts.length > 0) {
@@ -179,19 +181,16 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
       const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: currentUser.id,
-        username: currentUser.username,
-        userEmail: currentUser.email,
+        userName: currentUser.username,
         userRole: currentUser.role,
         resourceId: resource.id,
         resourceName: resource.name,
-        resourceCategory: resource.category,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
+        startTime: toLocalISOString(startDateTime),
+        endTime: toLocalISOString(endDateTime),
         purpose: formData.purpose,
         attendees: parseInt(formData.attendees) || 1,
-        notes: formData.notes,
         status: 'pending',
-        department: currentUser.department || 'General'
+        isRecurring: false
       };
 
       console.log('📝 Creating booking with user ID:', currentUser.id);

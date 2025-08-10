@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { X, Calendar, Clock, Users } from 'lucide-react';
 import Calendar from 'react-calendar';
-import { X, Clock, Users, MapPin } from 'lucide-react';
+import 'react-calendar/dist/Calendar.css';
 import { firebaseService } from '../services/firebase-service';
 import { Booking } from '../types';
+import { toLocalDateString, formatLocalTime } from '../utils/date-utils';
 import 'react-calendar/dist/Calendar.css';
 
 interface BookingCalendarProps {
@@ -36,14 +38,13 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     try {
       // Always load all bookings for everyone to see
       const bookings = await firebaseService.getAllBookings();
-
+      
       setAllBookings(bookings);
       
-      // Group bookings by date
+      // Group bookings by date using local timezone to avoid date shifts
       const groupedBookings: DayBookings = {};
       bookings.forEach(booking => {
-        const date = new Date(booking.startTime);
-        const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const dateKey = toLocalDateString(booking.startTime);
         
         if (!groupedBookings[dateKey]) {
           groupedBookings[dateKey] = [];
@@ -101,8 +102,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   };
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return formatLocalTime(dateString);
   };
 
   const getStatusColor = (status: string) => {

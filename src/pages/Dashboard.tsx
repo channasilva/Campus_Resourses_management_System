@@ -1,10 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Users, LogOut, User as UserIcon, Mail, Shield, Calendar, Hash, BookOpen, Plus, Clock, CalendarDays, Send, User } from 'lucide-react';
+import { 
+  Calendar, 
+  Clock, 
+  Users, 
+  MapPin, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  BookOpen, 
+  Bell, 
+  Settings, 
+  LogOut, 
+  Search,
+  Filter,
+  Send,
+  Eye,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Hash,
+  Mail,
+  Shield,
+  CalendarDays,
+  User,
+  GraduationCap
+} from 'lucide-react';
 import Button from '../components/Button';
 import { firebaseService } from '../services/firebase-service';
 import { Resource, Booking, Notification } from '../types';
 import { User as UserType } from '../types/auth';
+import { formatLocalDateTime, formatLocalTime } from '../utils/date-utils';
 import toast, { Toaster } from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -333,7 +361,7 @@ const Dashboard: React.FC = () => {
               
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                  <UserIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="text-base">
                   <p className="font-semibold text-gray-900 dark:text-gray-100">{currentUser.username}</p>
@@ -455,9 +483,9 @@ const Dashboard: React.FC = () => {
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{booking.resourceName}</p>
-                            <p className="text-base text-gray-500 dark:text-gray-400">
-                              {new Date(booking.startTime).toLocaleDateString()} at{' '}
-                              {new Date(booking.startTime).toLocaleTimeString()}
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {formatLocalDateTime(booking.startTime)} at{' '}
+                              {formatLocalTime(booking.startTime)}
                             </p>
                           </div>
                         </div>
@@ -660,11 +688,11 @@ const Dashboard: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-gray-500 dark:text-gray-400">Start Time</p>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">{new Date(booking.startTime).toLocaleString()}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{formatLocalDateTime(booking.startTime)}</p>
                         </div>
                         <div>
                           <p className="text-gray-500 dark:text-gray-400">End Time</p>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">{new Date(booking.endTime).toLocaleString()}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{formatLocalDateTime(booking.endTime)}</p>
                         </div>
                         <div>
                           <p className="text-gray-500 dark:text-gray-400">Purpose</p>
@@ -773,7 +801,7 @@ const Dashboard: React.FC = () => {
                           
                           <div className="flex items-center justify-between mt-2">
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {new Date(notification.createdAt).toLocaleString()}
+                              {formatLocalDateTime(notification.createdAt)}
                             </p>
                             {notification.createdBy && (
                               <p className="text-xs text-gray-500 dark:text-gray-400">
