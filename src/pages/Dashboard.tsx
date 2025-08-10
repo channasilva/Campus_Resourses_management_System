@@ -643,7 +643,7 @@ const Dashboard: React.FC = () => {
                           <h4 className="font-semibold text-gray-900 dark:text-gray-100">{booking.resourceName}</h4>
                           {currentUser?.role?.toLowerCase() === 'admin' && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              Booked by: {booking.username} ({booking.userEmail})
+                              Booked by: {booking.userName} ({booking.userRole})
                             </p>
                           )}
                         </div>

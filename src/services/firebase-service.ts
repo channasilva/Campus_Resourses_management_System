@@ -552,7 +552,7 @@ class FirebaseService {
         resourceName: b.resourceName,
         status: b.status,
         userId: b.userId,
-        username: b.username
+        userName: b.userName
       })));
       return bookings;
     } catch (error: any) {

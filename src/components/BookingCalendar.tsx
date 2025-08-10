@@ -34,13 +34,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   const loadAllBookings = async () => {
     setLoading(true);
     try {
-      let bookings: Booking[] = [];
-      
-      if (currentUser?.role?.toLowerCase() === 'admin') {
-        bookings = await firebaseService.getAllBookings();
-      } else {
-        bookings = await firebaseService.getBookingsByUser(currentUser.id);
-      }
+      // Always load all bookings for everyone to see
+      const bookings = await firebaseService.getAllBookings();
 
       setAllBookings(bookings);
       
@@ -227,11 +222,10 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                                 <span className="text-gray-900 dark:text-gray-100">{booking.purpose}</span>
                               </div>
 
-                              {currentUser?.role?.toLowerCase() === 'admin' && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                  Booked by: {booking.username} ({booking.userEmail})
-                                </div>
-                              )}
+                              {/* Show user information for all users */}
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                Booked by: {booking.userName} ({booking.userRole})
+                              </div>
                             </div>
                           </div>
                         ))

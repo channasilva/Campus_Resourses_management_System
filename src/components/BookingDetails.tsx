@@ -159,15 +159,6 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
                 {booking.purpose}
               </p>
             </div>
-
-            {booking.notes && (
-              <div>
-                <h3 className="font-medium text-gray-900 mb-2">Additional Notes</h3>
-                <p className="text-gray-700 bg-gray-50 rounded p-3">
-                  {booking.notes}
-                </p>
-              </div>
-            )}
           </div>
 
           {/* User Information */}
@@ -177,8 +168,7 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
               Booked By
             </h3>
             <div className="space-y-2 text-sm">
-              <p><strong>Name:</strong> {booking.username}</p>
-              <p><strong>Email:</strong> {booking.userEmail}</p>
+              <p><strong>Name:</strong> {booking.userName}</p>
               <p><strong>Role:</strong> {booking.userRole}</p>
             </div>
           </div>
