@@ -36,8 +36,14 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   const loadAllBookings = async () => {
     setLoading(true);
     try {
+      console.log('🔄 Loading all bookings for calendar...');
+      console.log('👤 Current user role:', currentUser?.role);
+      
       // Always load all bookings for everyone to see
       const bookings = await firebaseService.getAllBookings();
+      
+      console.log('📋 Total bookings loaded:', bookings.length);
+      console.log('📋 Sample booking:', bookings[0]);
       
       setAllBookings(bookings);
       
@@ -52,15 +58,23 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         groupedBookings[dateKey].push(booking);
       });
       
+      console.log('📅 Grouped bookings by date:', Object.keys(groupedBookings));
+      console.log('📅 Sample date bookings:', Object.values(groupedBookings)[0]);
+      
       setDayBookings(groupedBookings);
     } catch (error) {
-      console.error('Error loading bookings for calendar:', error);
+      console.error('❌ Error loading bookings for calendar:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDateClick = (date: Date) => {
+    console.log('📅 Date clicked:', date);
+    console.log('📅 Date string:', date.toISOString().split('T')[0]);
+    console.log('📅 Available dates with bookings:', Object.keys(dayBookings));
+    console.log('📅 Bookings for selected date:', dayBookings[date.toISOString().split('T')[0]] || []);
+    
     setSelectedDate(date);
   };
 
@@ -122,7 +136,14 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     if (!selectedDate) return [];
     
     const dateKey = selectedDate.toISOString().split('T')[0];
-    return dayBookings[dateKey] || [];
+    const bookings = dayBookings[dateKey] || [];
+    
+    console.log('🔍 Getting bookings for date:', dateKey);
+    console.log('🔍 Available dates:', Object.keys(dayBookings));
+    console.log('🔍 Found bookings:', bookings.length);
+    console.log('🔍 Bookings:', bookings);
+    
+    return bookings;
   };
 
   if (!isOpen) return null;
