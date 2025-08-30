@@ -1,9 +1,10 @@
-import { 
-  createUserWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
-  UserCredential 
+  updatePassword,
+  UserCredential
 } from 'firebase/auth';
 import { 
   doc, 
@@ -40,20 +41,20 @@ import {
 
 class FirebaseService {
   private createQuery<T>(
-    collectionRef: CollectionReference<T>,
+    collectionRef: CollectionReference<DocumentData>,
     conditions: { field: string; operator: '==' | '>' | '<' | '>=' | '<='; value: any }[] = [],
     sortOptions: { field: string; direction: 'asc' | 'desc' }[] = []
-  ): Query<T> {
-    let q: Query<T> = collectionRef as Query<T>;
+  ): Query<DocumentData> {
+    let q: Query<DocumentData> = collectionRef as Query<DocumentData>;
 
     // Apply where conditions
     conditions.forEach(({ field, operator, value }) => {
-      q = query(q, where(field, operator, value)) as Query<T>;
+      q = query(q, where(field, operator, value));
     });
 
     // Apply sort options
     sortOptions.forEach(({ field, direction }) => {
-      q = query(q, orderBy(field, direction)) as Query<T>;
+      q = query(q, orderBy(field, direction));
     });
 
     return q;
@@ -170,23 +171,6 @@ class FirebaseService {
     }
   }
 
-  // Get all users with their complete data
-  async getAllUsers(): Promise<User[]> {
-    try {
-      console.log('📊 Fetching all users from Firestore...');
-      const usersRef = collection(db, 'users');
-      const usersSnapshot = await getDocs(usersRef);
-      const users = usersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as User));
-      console.log(`✅ Successfully fetched ${users.length} users`);
-      return users;
-    } catch (error: any) {
-      console.error('❌ Error fetching users:', error);
-      throw new Error('Failed to fetch users: ' + error.message);
-    }
-  }
 
   async updateProfile(userId: string, data: ProfileUpdateData): Promise<void> {
     try {
@@ -281,21 +265,19 @@ class FirebaseService {
   // Resource Management
   async createResource(resource: Omit<Resource, 'id' | 'createdAt' | 'updatedAt'>): Promise<Resource> {
     try {
-      const docRef = await addDoc(collection(db, 'resources'), {
+      const resourceData = {
         ...resource,
-        isUnderMaintenance: false,
-        maintenanceNote: '',
+        isUnderMaintenance: resource.isUnderMaintenance ?? false,
+        maintenanceNote: resource.maintenanceNote ?? '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      });
+      };
 
-      return { 
-        ...resource, 
-        id: docRef.id, 
-        isUnderMaintenance: false,
-        maintenanceNote: '',
-        createdAt: new Date().toISOString(), 
-        updatedAt: new Date().toISOString() 
+      const docRef = await addDoc(collection(db, 'resources'), resourceData);
+
+      return {
+        ...resourceData,
+        id: docRef.id
       };
     } catch (error: any) {
       console.error('Create resource error:', error);
@@ -316,13 +298,15 @@ class FirebaseService {
           {
             id: 'sample-1',
             name: 'Computer Lab A',
+            type: 'lab' as const,
             description: 'Fully equipped computer lab with 25 workstations',
             category: 'Laboratory',
             location: 'Building A, Room 101',
             capacity: 25,
-            status: 'available',
+            status: 'available' as const,
             isUnderMaintenance: false,
             maintenanceNote: '',
+            features: ['Computers', 'Projector', 'Whiteboard'],
             equipment: ['Computers', 'Projector', 'Whiteboard'],
             maintenanceSchedule: 'Monthly',
             createdAt: new Date().toISOString(),
@@ -331,13 +315,15 @@ class FirebaseService {
           {
             id: 'sample-2',
             name: 'Conference Room B',
+            type: 'room' as const,
             description: 'Professional conference room with presentation equipment',
             category: 'Meeting Room',
             location: 'Building B, Room 205',
             capacity: 15,
-            status: 'available',
+            status: 'available' as const,
             isUnderMaintenance: false,
             maintenanceNote: '',
+            features: ['Projector', 'Video Conference System', 'Whiteboard'],
             equipment: ['Projector', 'Video Conference System', 'Whiteboard'],
             maintenanceSchedule: 'Quarterly',
             createdAt: new Date().toISOString(),
@@ -346,13 +332,15 @@ class FirebaseService {
           {
             id: 'sample-3',
             name: 'Science Lab',
+            type: 'lab' as const,
             description: 'Advanced science laboratory with modern equipment',
             category: 'Laboratory',
             location: 'Building C, Room 301',
             capacity: 20,
-            status: 'available',
+            status: 'available' as const,
             isUnderMaintenance: false,
             maintenanceNote: '',
+            features: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
             equipment: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
             maintenanceSchedule: 'Weekly',
             createdAt: new Date().toISOString(),
@@ -379,37 +367,43 @@ class FirebaseService {
       const sampleResources = [
         {
           name: 'Computer Lab A',
+          type: 'lab' as const,
           description: 'Fully equipped computer lab with 25 workstations',
           category: 'Laboratory',
           location: 'Building A, Room 101',
           capacity: 25,
-          status: 'available',
+          status: 'available' as const,
           isUnderMaintenance: false,
           maintenanceNote: '',
+          features: ['Computers', 'Projector', 'Whiteboard'],
           equipment: ['Computers', 'Projector', 'Whiteboard'],
           maintenanceSchedule: 'Monthly'
         },
         {
           name: 'Conference Room B',
+          type: 'room' as const,
           description: 'Professional conference room with presentation equipment',
           category: 'Meeting Room',
           location: 'Building B, Room 205',
           capacity: 15,
-          status: 'available',
+          status: 'available' as const,
           isUnderMaintenance: false,
           maintenanceNote: '',
+          features: ['Projector', 'Video Conference System', 'Whiteboard'],
           equipment: ['Projector', 'Video Conference System', 'Whiteboard'],
           maintenanceSchedule: 'Quarterly'
         },
         {
           name: 'Science Lab',
+          type: 'lab' as const,
           description: 'Advanced science laboratory with modern equipment',
           category: 'Laboratory',
           location: 'Building C, Room 301',
           capacity: 20,
-          status: 'available',
+          status: 'available' as const,
           isUnderMaintenance: false,
           maintenanceNote: '',
+          features: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
           equipment: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
           maintenanceSchedule: 'Weekly'
         }
@@ -484,25 +478,28 @@ class FirebaseService {
   async getBookings(userId?: string): Promise<Booking[]> {
     try {
       console.log('🔍 getBookings called with userId:', userId);
-      
-      let q = collection(db, 'bookings');
+
+      let q: any = collection(db, 'bookings');
       if (userId) {
         console.log('🔍 Adding userId filter:', userId);
-        const queryRef = query(collection(db, 'bookings'), where('userId', '==', userId));
+        q = query(collection(db, 'bookings'), where('userId', '==', userId));
       }
       // Remove orderBy to avoid index requirement for now
       // q = query(q, orderBy('createdAt', 'desc'));
-      
+
       console.log('🔍 Executing Firestore query...');
       const querySnapshot = await getDocs(q);
       console.log('🔍 Query returned', querySnapshot.docs.length, 'documents');
-      
-      const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
+
+      const bookings = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return Object.assign({ id: doc.id }, data) as Booking;
+      });
       console.log('🔍 Mapped bookings:', bookings);
-      
+
       // Sort manually instead of using orderBy
       bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
+
       return bookings;
     } catch (error: any) {
       console.error('Get bookings error:', error);
@@ -786,14 +783,17 @@ class FirebaseService {
 
   async getMaintenanceRecords(resourceId?: string): Promise<MaintenanceRecord[]> {
     try {
-      let q = collection(db, 'maintenance');
+      let q: any = collection(db, 'maintenance');
       if (resourceId) {
         q = query(q, where('resourceId', '==', resourceId));
       }
       q = query(q, orderBy('reportedAt', 'desc'));
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as MaintenanceRecord[];
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return Object.assign({ id: doc.id }, data) as MaintenanceRecord;
+      });
     } catch (error: any) {
       console.error('Get maintenance records error:', error);
       throw new Error(error.message);

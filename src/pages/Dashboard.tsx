@@ -49,6 +49,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import UserCountCard from '../components/UserCountCard';
 import MaintenanceToggle from '../components/MaintenanceToggle';
 import DashboardAnalytics from '../components/DashboardAnalytics';
+import AdvancedAnalytics from '../components/AdvancedAnalytics';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -493,6 +494,7 @@ const Dashboard: React.FC = () => {
             {[
               'overview',
               currentUser?.role?.toLowerCase() === 'admin' ? 'analytics' : null,
+              currentUser?.role?.toLowerCase() === 'admin' ? 'analysis' : null,
               'resources',
               'bookings',
               'notifications'
@@ -519,7 +521,7 @@ const Dashboard: React.FC = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Analytics Dashboard</h2>
               </div>
-              <DashboardAnalytics 
+              <DashboardAnalytics
                 bookings={bookings || []}
                 resources={resources || []}
                 totalUsers={userCount}
@@ -528,6 +530,15 @@ const Dashboard: React.FC = () => {
               <div className="text-sm text-gray-500 mt-4">
                 Role: {currentUser?.role}, Users: {userCount}, Resources: {resources?.length || 0}, Bookings: {bookings?.length || 0}
               </div>
+            </div>
+          )}
+          {activeTab === 'analysis' && currentUser?.role?.toLowerCase() === 'admin' && (
+            <div className="p-6 space-y-6">
+              <AdvancedAnalytics
+                bookings={bookings || []}
+                resources={resources || []}
+                totalUsers={userCount}
+              />
             </div>
           )}
           {activeTab === 'overview' && (
