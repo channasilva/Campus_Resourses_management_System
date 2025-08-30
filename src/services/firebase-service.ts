@@ -19,7 +19,10 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  Timestamp 
+  Timestamp,
+  CollectionReference,
+  Query,
+  DocumentData
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { auth, db, storage } from '../config/firebase';
@@ -36,6 +39,26 @@ import {
 } from '../types';
 
 class FirebaseService {
+  private createQuery<T>(
+    collectionRef: CollectionReference<T>,
+    conditions: { field: string; operator: '==' | '>' | '<' | '>=' | '<='; value: any }[] = [],
+    sortOptions: { field: string; direction: 'asc' | 'desc' }[] = []
+  ): Query<T> {
+    let q: Query<T> = collectionRef as Query<T>;
+
+    // Apply where conditions
+    conditions.forEach(({ field, operator, value }) => {
+      q = query(q, where(field, operator, value)) as Query<T>;
+    });
+
+    // Apply sort options
+    sortOptions.forEach(({ field, direction }) => {
+      q = query(q, orderBy(field, direction)) as Query<T>;
+    });
+
+    return q;
+  }
+
   // User Management
   async register(userData: {
     username: string;
