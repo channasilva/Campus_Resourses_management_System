@@ -3,17 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Enhanced mobile viewport configuration -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    
+    <!-- Mobile-specific meta tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Campus Resources" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="msapplication-TileColor" content="#3b82f6" />
+    
+    <!-- Prevent automatic phone number detection -->
+    <meta name="format-detection" content="telephone=no" />
+    
     <title>Campus Resources Management System</title>
+    
+    <!-- Optimized font loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/Campus_Resourses_management_System/assets/index-f8791a68.js"></script>
-    <link rel="stylesheet" href="/Campus_Resourses_management_System/assets/index-f4580833.css">
+    
+    <script type="module" crossorigin src="/Campus_Resourses_management_System/assets/index-4038e651.js"></script>
+    <link rel="stylesheet" href="/Campus_Resourses_management_System/assets/index-ea2ab9fc.css">
   </head>
-  <body>
+  <body class="mobile-safe-area">
     <div id="root"></div>
     
+    
+    <!-- Show content after fonts are loaded -->
+    <script>
+      document.fonts.ready.then(() => {
+        document.documentElement.style.visibility = 'visible';
+        document.documentElement.style.opacity = '1';
+      });
+    </script>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
       // MIT License
