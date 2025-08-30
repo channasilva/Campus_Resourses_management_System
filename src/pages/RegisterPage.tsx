@@ -134,32 +134,32 @@ const RegisterPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 transition-all duration-300">
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
       
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
-            <UserCheck className="w-8 h-8 text-white" />
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
+            <UserCheck className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Create Account</h2>
-          <p className="text-gray-600 dark:text-gray-400">Join our campus resources management system</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">Create Account</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Join our campus resources management system</p>
         </div>
 
         {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg flex items-center">
-            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-            <span className="text-green-700 dark:text-green-400">{successMessage}</span>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg flex items-start">
+            <CheckCircle className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+            <span className="text-sm sm:text-base text-green-700 dark:text-green-400 leading-relaxed">{successMessage}</span>
           </div>
         )}
 
         {apiError && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg flex items-center">
-            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
-            <span className="text-red-700 dark:text-red-400">{apiError}</span>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg flex items-start">
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+            <span className="text-sm sm:text-base text-red-700 dark:text-red-400 leading-relaxed">{apiError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <Input
             label="Username"
             type="text"
@@ -228,16 +228,16 @@ const RegisterPage: React.FC = () => {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full"
+            className="w-full mobile-button"
           >
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium py-2 px-1 -mx-1 rounded touch-manipulation">
               Sign in
             </Link>
           </p>

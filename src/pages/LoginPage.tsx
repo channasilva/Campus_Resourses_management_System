@@ -73,25 +73,25 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300">
-      <Toaster position="top-right" />
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
+    <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300">
+      <Toaster position="top-center" />
+      <div className="max-w-md w-full space-y-6 sm:space-y-8">
+        {/* Header - Mobile optimized */}
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-primary-600 rounded-xl flex items-center justify-center">
-            <GraduationCap className="h-8 w-8 text-white" />
+          <div className="mx-auto h-12 w-12 sm:h-14 sm:w-14 bg-primary-600 rounded-xl flex items-center justify-center">
+            <GraduationCap className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
             Welcome back
           </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Sign in to your Campus Resources account
           </p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-8 animate-fade-in">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+        {/* Login Form - Mobile optimized */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-8 animate-fade-in">
+          <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
             <Input
               label="Email Address"
               type="email"
@@ -112,21 +112,22 @@ const LoginPage: React.FC = () => {
               required
             />
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center">
                 <input
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded touch-manipulation"
+                  style={{ minHeight: '20px', minWidth: '20px' }}
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-100">
+                <label htmlFor="remember-me" className="ml-3 block text-sm text-gray-900 dark:text-gray-100">
                   Remember me
                 </label>
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                <a href="#" className="font-medium text-primary-600 hover:text-primary-500 py-2 px-1 -mx-1 rounded touch-manipulation">
                   Forgot your password?
                 </a>
               </div>
@@ -152,8 +153,8 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button variant="secondary" className="w-full">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button variant="secondary" className="w-full mobile-button">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -163,7 +164,7 @@ const LoginPage: React.FC = () => {
                 <span className="ml-2">Google</span>
               </Button>
 
-              <Button variant="secondary" className="w-full">
+              <Button variant="secondary" className="w-full mobile-button">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806.026-1.566.247-2.229.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                 </svg>
@@ -172,13 +173,13 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Sign up link */}
+          {/* Sign up link - Mobile optimized */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
               <Link
                 to="/register"
-                className="font-medium text-primary-600 hover:text-primary-500"
+                className="font-medium text-primary-600 hover:text-primary-500 py-2 px-1 -mx-1 rounded touch-manipulation"
               >
                 Sign up
               </Link>

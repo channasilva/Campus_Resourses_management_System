@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  MapPin, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  BookOpen, 
-  Bell, 
-  Settings, 
-  LogOut, 
+import {
+  Calendar,
+  Clock,
+  Users,
+  MapPin,
+  Plus,
+  Edit,
+  Trash2,
+  BookOpen,
+  Bell,
+  Settings,
+  LogOut,
   Search,
   Filter,
   Send,
@@ -28,7 +28,9 @@ import {
   User,
   GraduationCap,
   Menu,
-  X
+  X,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 import Button from '../components/Button';
 import { firebaseService } from '../services/firebase-service';
@@ -370,104 +372,155 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-all duration-300">
-      <Toaster position="top-center" />
+    <div className="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-primary-50/30 dark:from-secondary-950 dark:via-secondary-900 dark:to-primary-950/30 transition-all duration-500">
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          className: 'bg-white/90 dark:bg-secondary-800/90 backdrop-blur-xl border border-secondary-200/50 dark:border-secondary-700/50',
+          duration: 4000,
+        }}
+      />
       
-      {/* Mobile-First Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-all duration-300 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Enhanced Modern Header */}
+      <header className="glass-effect border-b border-secondary-200/50 dark:border-secondary-700/50 sticky top-0 z-50 backdrop-blur-xl">
+        <div className="container-responsive">
           {/* Mobile Header */}
           <div className="flex items-center justify-between h-16 lg:hidden">
-            <div className="flex items-center space-x-3">
-              <GraduationCap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-              <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                Campus Resources
-              </h1>
+            <div className="flex items-center space-x-3 animate-fade-in-left">
+              <div className="relative">
+                <GraduationCap className="h-8 w-8 text-primary-600 dark:text-primary-400 animate-float" />
+                <div className="absolute inset-0 bg-primary-600/20 dark:bg-primary-400/20 rounded-full blur-lg animate-pulse-soft" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold gradient-text">
+                  Campus Resources
+                </h1>
+                <div className="h-0.5 w-full bg-gradient-to-r from-primary-600 to-transparent rounded-full" />
+              </div>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 animate-fade-in-right">
               <ThemeToggle />
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="btn btn-ghost btn-sm p-2 rounded-xl hover-scale"
+                aria-label="Toggle mobile menu"
               >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isMobileMenuOpen ?
+                  <X className="h-5 w-5 animate-scale-in" /> :
+                  <Menu className="h-5 w-5 animate-scale-in" />
+                }
               </button>
             </div>
           </div>
 
           {/* Desktop Header */}
-          <div className="hidden lg:flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <GraduationCap className="h-10 w-10 text-blue-600 dark:text-blue-400 mr-4" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Campus Resources Management
-              </h1>
+          <div className="hidden lg:flex justify-between items-center h-20 animate-fade-in-down">
+            <div className="flex items-center space-x-4">
+              <div className="relative group">
+                <GraduationCap className="h-12 w-12 text-primary-600 dark:text-primary-400 animate-float group-hover:scale-110 transition-transform duration-300" />
+                <div className="absolute inset-0 bg-primary-600/20 dark:bg-primary-400/20 rounded-full blur-xl animate-pulse-soft opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold gradient-text">
+                  Campus Resources Management
+                </h1>
+                <div className="h-1 w-full bg-gradient-to-r from-primary-600 via-primary-400 to-transparent rounded-full" />
+              </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <ThemeToggle />
+              
               {currentUser.role?.toLowerCase() === 'admin' && (
-                <UserCountCard />
+                <div className="animate-fade-in-up">
+                  <UserCountCard />
+                </div>
               )}
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              
+              {/* User Profile Section */}
+              <div className="flex items-center space-x-4 p-3 rounded-2xl bg-white/50 dark:bg-secondary-800/50 backdrop-blur-sm border border-secondary-200/50 dark:border-secondary-700/50 hover:bg-white/70 dark:hover:bg-secondary-800/70 transition-all duration-300 animate-fade-in-up">
+                <div className="relative">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-secondary-800 animate-pulse" />
                 </div>
                 <div className="text-sm">
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">{currentUser.username}</p>
-                  <p className="text-gray-500 dark:text-gray-400 capitalize">{currentUser.role}</p>
-                </div>
-              </div>
-              <Button
-                onClick={handleOpenProfileSettings}
-                variant="outline"
-                size="sm"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Button>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          </div>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 py-4 space-y-4">
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{currentUser.username}</p>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs capitalize">{currentUser.role}</p>
+                  <p className="font-semibold text-secondary-900 dark:text-secondary-100">{currentUser.username}</p>
+                  <p className="text-secondary-500 dark:text-secondary-400 capitalize flex items-center gap-1">
+                    <Shield className="w-3 h-3" />
+                    {currentUser.role}
+                  </p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-3 animate-fade-in-up">
                 <Button
                   onClick={handleOpenProfileSettings}
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="w-full"
+                  className="hover-lift"
+                  leftIcon={<User className="w-4 h-4" />}
                 >
-                  <User className="w-4 h-4 mr-2" />
                   Profile
                 </Button>
                 <Button
                   onClick={handleLogout}
                   variant="outline"
                   size="sm"
-                  className="w-full"
+                  className="hover-lift border-error-300 text-error-600 hover:bg-error-500 hover:text-white hover:border-error-500"
+                  leftIcon={<LogOut className="w-4 h-4" />}
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="lg:hidden border-t border-secondary-200/50 dark:border-secondary-700/50 py-6 space-y-6 animate-fade-in-down">
+              {/* User Profile Card */}
+              <div className="card-interactive p-4 animate-scale-in">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-secondary-800 animate-pulse" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-secondary-900 dark:text-secondary-100 text-base">{currentUser.username}</p>
+                    <p className="text-secondary-500 dark:text-secondary-400 text-sm capitalize flex items-center gap-1">
+                      <Shield className="w-3 h-3" />
+                      {currentUser.role}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-4 animate-fade-in-up">
+                <Button
+                  onClick={handleOpenProfileSettings}
+                  variant="ghost"
+                  size="md"
+                  fullWidth
+                  leftIcon={<User className="w-4 h-4" />}
+                  className="hover-lift"
+                >
+                  Profile
+                </Button>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="md"
+                  fullWidth
+                  leftIcon={<LogOut className="w-4 h-4" />}
+                  className="hover-lift border-error-300 text-error-600 hover:bg-error-500 hover:text-white hover:border-error-500"
+                >
                   Logout
                 </Button>
               </div>
@@ -476,64 +529,112 @@ const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Welcome Section - Mobile Optimized */}
-        <div className="mb-6 sm:mb-8 lg:mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 lg:mb-4 leading-tight">
-            Welcome back, {currentUser.username}!
-          </h2>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 leading-relaxed">
-            Manage your campus resources and bookings from your dashboard.
-          </p>
-        </div>
-
-        {/* Mobile-First Navigation Tabs */}
-        <div className="mb-6 sm:mb-8 lg:mb-12">
-          <div className="flex overflow-x-auto scrollbar-hide pb-2 -mb-2">
-            {[
-              'overview',
-              currentUser?.role?.toLowerCase() === 'admin' ? 'analytics' : null,
-              currentUser?.role?.toLowerCase() === 'admin' ? 'analysis' : null,
-              'resources',
-              'bookings',
-              'notifications'
-            ].filter(Boolean).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`mobile-tab px-4 sm:px-6 ${
-                  activeTab === tab
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+      {/* Enhanced Main Content */}
+      <main className="container-responsive py-8 lg:py-12 space-y-8 lg:space-y-12">
+        {/* Hero Welcome Section */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-transparent to-accent-purple-500/10 rounded-3xl" />
+          <div className="relative card-glass p-8 lg:p-12 animate-fade-in-up">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse" />
+                  <span className="text-sm font-medium text-success-600 dark:text-success-400">
+                    System Online
+                  </span>
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold gradient-text leading-tight">
+                  Welcome back, {currentUser.username}!
+                </h2>
+                <p className="text-lg lg:text-xl text-secondary-600 dark:text-secondary-400 leading-relaxed max-w-2xl">
+                  Manage your campus resources and bookings with our enhanced dashboard experience.
+                </p>
+              </div>
+              
+              {/* Quick Stats Preview */}
+              <div className="flex lg:flex-col gap-4 lg:gap-2 text-right">
+                <div className="text-center lg:text-right">
+                  <div className="text-2xl lg:text-3xl font-bold text-primary-600 dark:text-primary-400">
+                    {resources.length}
+                  </div>
+                  <div className="text-sm text-secondary-500 dark:text-secondary-400">Resources</div>
+                </div>
+                <div className="text-center lg:text-right">
+                  <div className="text-2xl lg:text-3xl font-bold text-success-600 dark:text-success-400">
+                    {bookings.length}
+                  </div>
+                  <div className="text-sm text-secondary-500 dark:text-secondary-400">Bookings</div>
+                </div>
+                <div className="text-center lg:text-right">
+                  <div className="text-2xl lg:text-3xl font-bold text-warning-600 dark:text-warning-400">
+                    {notifications.length}
+                  </div>
+                  <div className="text-sm text-secondary-500 dark:text-secondary-400">Notifications</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Tab Content */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 transition-all duration-300">
+        {/* Enhanced Navigation Tabs */}
+        <section className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <div className="card-glass p-2 rounded-2xl">
+            <div className="flex overflow-x-auto scrollbar-hide gap-2">
+              {[
+                { key: 'overview', label: 'Overview', icon: <Hash className="w-4 h-4" /> },
+                ...(currentUser?.role?.toLowerCase() === 'admin' ? [
+                  { key: 'analytics', label: 'Analytics', icon: <TrendingUp className="w-4 h-4" /> },
+                  { key: 'analysis', label: 'Analysis', icon: <BarChart3 className="w-4 h-4" /> }
+                ] : []),
+                { key: 'resources', label: 'Resources', icon: <BookOpen className="w-4 h-4" /> },
+                { key: 'bookings', label: 'Bookings', icon: <Calendar className="w-4 h-4" /> },
+                { key: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> }
+              ].map((tab, index) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`nav-tab flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap min-h-touch hover-scale ${
+                    activeTab === tab.key
+                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
+                      : 'text-secondary-600 dark:text-secondary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800 hover:text-secondary-900 dark:hover:text-secondary-100'
+                  }`}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                  {activeTab === tab.key && (
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full animate-bounce-in" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Enhanced Tab Content */}
+        <section className="card-glass rounded-3xl overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           {activeTab === 'analytics' && currentUser?.role?.toLowerCase() === 'admin' && (
-            <div className="p-6 space-y-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Analytics Dashboard</h2>
+            <div className="padding-responsive spacing-responsive">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+                <div>
+                  <h2 className="text-3xl font-bold gradient-text mb-2">Analytics Dashboard</h2>
+                  <p className="text-secondary-600 dark:text-secondary-400">Comprehensive insights and metrics</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-secondary-500 dark:text-secondary-400">
+                  <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse" />
+                  <span>Live Data</span>
+                </div>
               </div>
               <DashboardAnalytics
                 bookings={bookings || []}
                 resources={resources || []}
                 totalUsers={userCount}
               />
-              {/* Debug information */}
-              <div className="text-sm text-gray-500 mt-4">
-                Role: {currentUser?.role}, Users: {userCount}, Resources: {resources?.length || 0}, Bookings: {bookings?.length || 0}
-              </div>
             </div>
           )}
+          
           {activeTab === 'analysis' && currentUser?.role?.toLowerCase() === 'admin' && (
-            <div className="p-6 space-y-6">
+            <div className="padding-responsive spacing-responsive">
               <AdvancedAnalytics
                 bookings={bookings || []}
                 resources={resources || []}
@@ -541,116 +642,202 @@ const Dashboard: React.FC = () => {
               />
             </div>
           )}
+          
           {activeTab === 'overview' && (
-            <div className="p-4 sm:p-6 lg:p-8">
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-6">Overview</h3>
+            <div className="padding-responsive">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-3xl font-bold gradient-text mb-2">Dashboard Overview</h3>
+                  <p className="text-secondary-600 dark:text-secondary-400">Your personalized campus resource hub</p>
+                </div>
+                <div className="hidden sm:flex items-center gap-2 text-sm text-secondary-500 dark:text-secondary-400">
+                  <Clock className="w-4 h-4" />
+                  <span>Updated {new Date().toLocaleTimeString()}</span>
+                </div>
+              </div>
               
-              {/* Mobile-Optimized Stats Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-10">
-                <div className="stat-card p-4 sm:p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 sm:p-4 bg-blue-100 dark:bg-blue-800 rounded-xl sm:rounded-2xl flex-shrink-0">
-                      <Hash className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400" />
+              {/* Enhanced Stats Cards with Animations */}
+              <div className="grid-responsive mb-12">
+                <div className="stat-card hover-lift animate-fade-in-up group" style={{ animationDelay: '0.1s' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wide">Total Resources</p>
+                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">{resources.length}</p>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400">Available for booking</p>
                     </div>
-                    <div className="ml-3 sm:ml-4 lg:ml-6 min-w-0 flex-1">
-                      <p className="text-sm sm:text-base font-semibold text-blue-600 dark:text-blue-400">Total Resources</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100">{resources.length}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="stat-card-green p-4 sm:p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 sm:p-4 bg-green-100 dark:bg-green-800 rounded-xl sm:rounded-2xl flex-shrink-0">
-                      <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="ml-3 sm:ml-4 lg:ml-6 min-w-0 flex-1">
-                      <p className="text-sm sm:text-base font-semibold text-green-600 dark:text-green-400">Your Bookings</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-green-900 dark:text-green-100">{bookings.length}</p>
+                    <div className="relative">
+                      <div className="p-4 bg-primary-100 dark:bg-primary-800 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                        <Hash className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div className="absolute inset-0 bg-primary-600/20 dark:bg-primary-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
                 </div>
 
-                <div className="stat-card-yellow sm:col-span-2 lg:col-span-1 p-4 sm:p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 sm:p-4 bg-yellow-100 dark:bg-yellow-800 rounded-xl sm:rounded-2xl flex-shrink-0">
-                      <Mail className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 dark:text-yellow-400" />
+                <div className="stat-card-success hover-lift animate-fade-in-up group" style={{ animationDelay: '0.2s' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-success-600 dark:text-success-400 uppercase tracking-wide">Your Bookings</p>
+                      <p className="text-4xl font-bold text-success-900 dark:text-success-100 group-hover:scale-110 transition-transform duration-300">{bookings.length}</p>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400">Active reservations</p>
                     </div>
-                    <div className="ml-3 sm:ml-4 lg:ml-6 min-w-0 flex-1">
-                      <p className="text-sm sm:text-base font-semibold text-yellow-600 dark:text-yellow-400">Notifications</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-yellow-900 dark:text-yellow-100">{notifications.length}</p>
+                    <div className="relative">
+                      <div className="p-4 bg-success-100 dark:bg-success-800 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                        <Calendar className="w-8 h-8 text-success-600 dark:text-success-400" />
+                      </div>
+                      <div className="absolute inset-0 bg-success-600/20 dark:bg-success-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="stat-card-warning hover-lift animate-fade-in-up group" style={{ animationDelay: '0.3s' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-warning-600 dark:text-warning-400 uppercase tracking-wide">Notifications</p>
+                      <p className="text-4xl font-bold text-warning-900 dark:text-warning-100 group-hover:scale-110 transition-transform duration-300">{notifications.length}</p>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400">Unread messages</p>
+                    </div>
+                    <div className="relative">
+                      <div className="p-4 bg-warning-100 dark:bg-warning-800 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                        <Mail className="w-8 h-8 text-warning-600 dark:text-warning-400" />
+                      </div>
+                      <div className="absolute inset-0 bg-warning-600/20 dark:bg-warning-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Mobile Quick Actions */}
-              <div className="mb-6 sm:mb-8">
-                <h4 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Quick Actions</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                  <button
-                    onClick={() => setActiveTab('resources')}
-                    className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-center"
-                  >
-                    <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Book Resource</p>
-                  </button>
-                  <button
+              {/* Enhanced Quick Actions */}
+              <div className="mb-12">
+                <h4 className="text-2xl font-bold gradient-text mb-6">Quick Actions</h4>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    {
+                      key: 'resources',
+                      label: 'Book Resource',
+                      icon: <Plus className="w-6 h-6" />,
+                      color: 'primary',
+                      description: 'Reserve a resource'
+                    },
+                    {
+                      key: 'bookings',
+                      label: 'View Bookings',
+                      icon: <Calendar className="w-6 h-6" />,
+                      color: 'success',
+                      description: 'Manage reservations'
+                    },
+                    {
+                      key: 'notifications',
+                      label: 'Notifications',
+                      icon: <Bell className="w-6 h-6" />,
+                      color: 'warning',
+                      description: 'Check messages'
+                    },
+                    {
+                      action: handleOpenCalendar,
+                      label: 'Calendar',
+                      icon: <CalendarDays className="w-6 h-6" />,
+                      color: 'info',
+                      description: 'View schedule'
+                    }
+                  ].map((action, index) => (
+                    <button
+                      key={action.key || 'calendar'}
+                      onClick={action.action || (() => setActiveTab(action.key))}
+                      className={`card-interactive p-6 text-center hover-lift animate-fade-in-up group ${
+                        action.color === 'primary' ? 'hover:shadow-primary-500/25' :
+                        action.color === 'success' ? 'hover:shadow-success-500/25' :
+                        action.color === 'warning' ? 'hover:shadow-warning-500/25' :
+                        'hover:shadow-info-500/25'
+                      }`}
+                      style={{ animationDelay: `${0.1 + index * 0.1}s` }}
+                    >
+                      <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300 ${
+                        action.color === 'primary' ? 'bg-primary-100 dark:bg-primary-800 text-primary-600 dark:text-primary-400' :
+                        action.color === 'success' ? 'bg-success-100 dark:bg-success-800 text-success-600 dark:text-success-400' :
+                        action.color === 'warning' ? 'bg-warning-100 dark:bg-warning-800 text-warning-600 dark:text-warning-400' :
+                        'bg-info-100 dark:bg-info-800 text-info-600 dark:text-info-400'
+                      }`}>
+                        {action.icon}
+                      </div>
+                      <h5 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-1">{action.label}</h5>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400">{action.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Enhanced Recent Activity */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-2xl font-bold gradient-text">Recent Activity</h4>
+                  <Button
                     onClick={() => setActiveTab('bookings')}
-                    className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors text-center"
+                    variant="ghost"
+                    size="sm"
+                    className="hover-scale"
                   >
-                    <Calendar className="w-6 h-6 text-green-600 dark:text-green-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-green-900 dark:text-green-100">View Bookings</p>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('notifications')}
-                    className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-colors text-center"
-                  >
-                    <Bell className="w-6 h-6 text-yellow-600 dark:text-yellow-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">Notifications</p>
-                  </button>
-                  <button
-                    onClick={handleOpenCalendar}
-                    className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors text-center"
-                  >
-                    <CalendarDays className="w-6 h-6 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Calendar</p>
-                  </button>
+                    View All
+                  </Button>
                 </div>
-              </div>
-
-              {/* Recent Activity - Mobile Optimized */}
-              <div className="space-y-4 sm:space-y-6">
-                <h4 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Recent Activity</h4>
                 
                 {bookings.length > 0 ? (
-                  <div className="space-y-3 sm:space-y-4">
-                    {bookings.slice(0, 3).map((booking) => (
-                      <div key={booking.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 mb-3 sm:mb-0">
-                          <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-800 rounded-lg sm:rounded-xl flex-shrink-0">
-                            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
+                  <div className="space-y-4">
+                    {bookings.slice(0, 3).map((booking, index) => (
+                      <div
+                        key={booking.id}
+                        className="card-interactive p-6 hover-lift animate-fade-in-up group"
+                        style={{ animationDelay: `${0.1 + index * 0.1}s` }}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-center space-x-4">
+                            <div className="p-3 bg-primary-100 dark:bg-primary-800 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                              <BookOpen className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h5 className="font-semibold text-secondary-900 dark:text-secondary-100 text-lg mb-1">{booking.resourceName}</h5>
+                              <p className="text-sm text-secondary-600 dark:text-secondary-400 flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                {formatLocalDateTime(booking.startTime)} at {formatLocalTime(booking.startTime)}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg mb-1">{booking.resourceName}</p>
-                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                              {formatLocalDateTime(booking.startTime)} at{' '}
-                              {formatLocalTime(booking.startTime)}
-                            </p>
+                          <div className="flex items-center gap-3">
+                            <span className={`badge ${
+                              booking.status === 'approved' ? 'badge-success' :
+                              booking.status === 'pending' ? 'badge-warning' :
+                              'badge-error'
+                            }`}>
+                              {booking.status}
+                            </span>
+                            <Button
+                              onClick={() => handleViewBookingDetails(booking)}
+                              variant="ghost"
+                              size="sm"
+                              className="hover-scale"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
-                        <span className={`px-3 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-full self-start sm:self-auto ${
-                          booking.status === 'approved' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' :
-                          booking.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300' :
-                          'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
-                        }`}>
-                          {booking.status}
-                        </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-6 sm:py-8 text-sm sm:text-base">No recent bookings found.</p>
+                  <div className="card text-center py-12 animate-fade-in-up">
+                    <div className="w-16 h-16 bg-secondary-100 dark:bg-secondary-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Calendar className="w-8 h-8 text-secondary-400" />
+                    </div>
+                    <h5 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100 mb-2">No Recent Activity</h5>
+                    <p className="text-secondary-500 dark:text-secondary-400 mb-6">Start by booking your first resource</p>
+                    <Button
+                      onClick={() => setActiveTab('resources')}
+                      variant="primary"
+                      className="hover-scale"
+                    >
+                      Browse Resources
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -1034,7 +1221,7 @@ const Dashboard: React.FC = () => {
               )}
             </div>
           )}
-        </div>
+        </section>
       </main>
 
       {/* Mobile Floating Action Button */}
