@@ -37,6 +37,7 @@ export interface Resource {
   isUnderMaintenance: boolean;
   maintenanceNote?: string;
   features: string[];
+  equipment?: string[];  // List of equipment available in the resource
   qrCode?: string;
   maintenanceHistory?: MaintenanceRecord[];
   createdAt: string;

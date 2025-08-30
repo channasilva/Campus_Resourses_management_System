@@ -80,6 +80,23 @@ class FirebaseService {
     }
   }
 
+  async getAllUsers(): Promise<User[]> {
+    try {
+      console.log('🔄 Fetching all users...');
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      const users = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as User));
+      console.log(`✅ Successfully fetched ${users.length} users`);
+      return users;
+    } catch (error) {
+      console.error('❌ Error fetching users:', error);
+      throw new Error('Failed to fetch users');
+    }
+  }
+
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
     try {
       const userCredential: UserCredential = await signInWithEmailAndPassword(
@@ -130,18 +147,21 @@ class FirebaseService {
     }
   }
 
-  // Helper method to get all users (for debugging)
+  // Get all users with their complete data
   async getAllUsers(): Promise<User[]> {
     try {
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      const users: User[] = [];
-      usersSnapshot.forEach((doc) => {
-        users.push(doc.data() as User);
-      });
+      console.log('📊 Fetching all users from Firestore...');
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      const users = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as User));
+      console.log(`✅ Successfully fetched ${users.length} users`);
       return users;
     } catch (error: any) {
-      console.error('Error getting all users:', error);
-      return [];
+      console.error('❌ Error fetching users:', error);
+      throw new Error('Failed to fetch users: ' + error.message);
     }
   }
 
@@ -445,7 +465,7 @@ class FirebaseService {
       let q = collection(db, 'bookings');
       if (userId) {
         console.log('🔍 Adding userId filter:', userId);
-        q = query(q, where('userId', '==', userId));
+        const queryRef = query(collection(db, 'bookings'), where('userId', '==', userId));
       }
       // Remove orderBy to avoid index requirement for now
       // q = query(q, orderBy('createdAt', 'desc'));

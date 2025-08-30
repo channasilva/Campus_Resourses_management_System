@@ -77,6 +77,7 @@ const Dashboard: React.FC = () => {
         const userData = localStorage.getItem('user');
         if (userData) {
           const user = JSON.parse(userData);
+          console.log('Current user role:', user.role);
           console.log('👤 Current user data:', user);
           console.log('🔍 User role:', user.role, 'Role type:', typeof user.role);
           console.log('🆔 User ID:', user.id, 'ID type:', typeof user.id);
@@ -489,7 +490,13 @@ const Dashboard: React.FC = () => {
         {/* Mobile-First Navigation Tabs */}
         <div className="mb-6 sm:mb-8 lg:mb-12">
           <div className="flex overflow-x-auto scrollbar-hide pb-2 -mb-2">
-            {['overview', 'analytics', 'resources', 'bookings', 'notifications'].map((tab) => (
+            {[
+              'overview',
+              currentUser?.role?.toLowerCase() === 'admin' ? 'analytics' : null,
+              'resources',
+              'bookings',
+              'notifications'
+            ].filter(Boolean).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -507,16 +514,20 @@ const Dashboard: React.FC = () => {
 
         {/* Tab Content */}
         <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 transition-all duration-300">
-          {activeTab === 'analytics' && (
-            <div className="space-y-6">
+          {activeTab === 'analytics' && currentUser?.role?.toLowerCase() === 'admin' && (
+            <div className="p-6 space-y-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Analytics Dashboard</h2>
               </div>
               <DashboardAnalytics 
-                bookings={bookings}
-                resources={resources}
-                totalUsers={currentUser?.role === 'admin' ? userCount : 0}
+                bookings={bookings || []}
+                resources={resources || []}
+                totalUsers={userCount}
               />
+              {/* Debug information */}
+              <div className="text-sm text-gray-500 mt-4">
+                Role: {currentUser?.role}, Users: {userCount}, Resources: {resources?.length || 0}, Bookings: {bookings?.length || 0}
+              </div>
             </div>
           )}
           {activeTab === 'overview' && (

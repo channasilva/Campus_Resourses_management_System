@@ -29,9 +29,21 @@ const AnalyticCard: React.FC<AnalyticCardProps> = ({ title, value, icon, descrip
 );
 
 const DashboardAnalytics: React.FC<AnalyticsProps> = ({ bookings, resources, totalUsers }) => {
+  console.log('Analytics Props:', { 
+    bookingsCount: bookings?.length || 0, 
+    resourcesCount: resources?.length || 0, 
+    totalUsers 
+  });
+
   const getMostBookedResource = () => {
+    if (!Array.isArray(bookings) || !Array.isArray(resources) || bookings.length === 0 || resources.length === 0) {
+      return { name: 'No bookings yet', count: 0 };
+    }
+
     const bookingCounts = bookings.reduce((acc: Record<string, number>, booking) => {
-      acc[booking.resourceId] = (acc[booking.resourceId] || 0) + 1;
+      if (booking.resourceId) {
+        acc[booking.resourceId] = (acc[booking.resourceId] || 0) + 1;
+      }
       return acc;
     }, {});
 
@@ -45,6 +57,10 @@ const DashboardAnalytics: React.FC<AnalyticsProps> = ({ bookings, resources, tot
   };
 
   const getPeakBookingTime = () => {
+    if (!bookings?.length) {
+      return 'No bookings yet';
+    }
+
     const hourCounts: Record<number, number> = {};
     
     bookings.forEach(booking => {
