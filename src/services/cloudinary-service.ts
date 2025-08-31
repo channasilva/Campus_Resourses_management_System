@@ -90,14 +90,9 @@ class CloudinaryService {
       formData.append('public_id', publicId);
       console.log('Public ID added:', publicId);
 
-      // Add transformation parameters for profile pictures (square crop, 300x300)
-      // Cloudinary expects transformation parameters as individual form fields
-      formData.append('width', '300');
-      formData.append('height', '300');
-      formData.append('crop', 'fill');
-      formData.append('gravity', 'face');
-      formData.append('quality', 'auto');
-      console.log('Transformation parameters added: width=300, height=300, crop=fill, gravity=face, quality=auto');
+      // Note: Transformations will be applied to the URL after upload
+      // This avoids the "Invalid transformation component" error
+      console.log('Upload will use URL-based transformations after successful upload');
 
       const xhr = new XMLHttpRequest();
       const uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
@@ -115,7 +110,19 @@ class CloudinaryService {
           try {
             const response: CloudinaryUploadResponse = JSON.parse(xhr.responseText);
             console.log('Upload successful:', response);
-            resolve(response);
+
+            // Apply transformation to the URL
+            const transformedUrl = this.applyTransformationToUrl(response.secure_url);
+            console.log('Transformed URL:', transformedUrl);
+
+            // Return response with transformed URL
+            const transformedResponse = {
+              ...response,
+              secure_url: transformedUrl,
+              original_secure_url: response.secure_url // Keep original for reference
+            };
+
+            resolve(transformedResponse);
           } catch (error) {
             console.error('Failed to parse Cloudinary response:', error);
             reject(new Error('Invalid response from Cloudinary'));
@@ -192,6 +199,21 @@ class CloudinaryService {
   }
 
   /**
+   * Apply transformation to Cloudinary URL
+   * @param baseUrl - The base Cloudinary URL
+   * @param transformation - The transformation string (e.g., "w_300,h_300,c_fill")
+   * @returns Transformed image URL
+   */
+  private applyTransformationToUrl(baseUrl: string, transformation: string = 'w_300,h_300,c_fill'): string {
+    // Insert transformation parameters into the URL after "/upload/"
+    const urlParts = baseUrl.split('/upload/');
+    if (urlParts.length === 2) {
+      return `${urlParts[0]}/upload/${transformation}/${urlParts[1]}`;
+    }
+    return baseUrl;
+  }
+
+  /**
    * Generate optimized image URLs for different sizes
    * @param baseUrl - The base Cloudinary URL
    * @param size - The desired size (thumbnail, small, medium, large)
@@ -249,13 +271,8 @@ class CloudinaryService {
       formData.append('upload_preset', this.uploadPreset);
       formData.append('public_id', `test_${Date.now()}`);
 
-      // Add transformation parameters for test image
-      formData.append('width', '300');
-      formData.append('height', '300');
-      formData.append('crop', 'fill');
-      formData.append('gravity', 'face');
-      formData.append('quality', 'auto');
-      console.log('Test transformation parameters added: width=300, height=300, crop=fill, gravity=face, quality=auto');
+      // Note: Transformations will be applied to the URL after upload
+      console.log('Test upload will use URL-based transformations after successful upload');
 
       const xhr = new XMLHttpRequest();
       const uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
@@ -270,11 +287,17 @@ class CloudinaryService {
           try {
             const response = JSON.parse(xhr.responseText);
             console.log('✅ Test upload successful:', response);
+
+            // Apply transformation to the test URL
+            const transformedUrl = this.applyTransformationToUrl(response.secure_url);
+            console.log('Test transformed URL:', transformedUrl);
+
             resolve({
               success: true,
               message: 'Cloudinary connection successful!',
               details: {
-                url: response.secure_url,
+                url: transformedUrl,
+                original_url: response.secure_url,
                 public_id: response.public_id,
                 status: xhr.status
               }
