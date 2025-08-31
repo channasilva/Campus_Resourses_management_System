@@ -182,6 +182,8 @@ export interface RegisterFormData {
 export interface ProfileUpdateData {
   username?: string;
   department?: string;
+  profilePicture?: string;
+  profilePicturePublicId?: string;
   contactInfo?: {
     phone?: string;
     office?: string;

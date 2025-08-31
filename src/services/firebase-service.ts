@@ -206,13 +206,15 @@ class FirebaseService {
   async updateUserProfile(userId: string, data: any): Promise<void> {
     try {
       console.log('🔄 Updating user profile for:', userId);
-      
+
       // Update Firestore document
       const updateData: any = {
         username: data.username,
         email: data.email,
         department: data.department,
         bio: data.bio,
+        profilePicture: data.profilePicture,
+        profilePicturePublicId: data.profilePicturePublicId,
         updatedAt: new Date().toISOString()
       };
 
@@ -225,7 +227,7 @@ class FirebaseService {
 
       console.log('📝 Updating Firestore user document:', updateData);
       await updateDoc(doc(db, 'users', userId), updateData);
-      
+
       console.log('✅ User profile updated successfully');
     } catch (error: any) {
       console.error('❌ User profile update error:', error);

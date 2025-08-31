@@ -110,19 +110,10 @@ class CloudinaryService {
           try {
             const response: CloudinaryUploadResponse = JSON.parse(xhr.responseText);
             console.log('Upload successful:', response);
+            console.log('Secure URL from Cloudinary:', response.secure_url);
 
-            // Apply transformation to the URL
-            const transformedUrl = this.applyTransformationToUrl(response.secure_url);
-            console.log('Transformed URL:', transformedUrl);
-
-            // Return response with transformed URL
-            const transformedResponse = {
-              ...response,
-              secure_url: transformedUrl,
-              original_secure_url: response.secure_url // Keep original for reference
-            };
-
-            resolve(transformedResponse);
+            // Return the original response - let profileImageManager handle transformations
+            resolve(response);
           } catch (error) {
             console.error('Failed to parse Cloudinary response:', error);
             reject(new Error('Invalid response from Cloudinary'));

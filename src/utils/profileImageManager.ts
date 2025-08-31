@@ -62,6 +62,7 @@ class ProfileImageManager {
       console.log('📤 Uploading to Cloudinary...');
       const cloudinaryResponse = await cloudinaryService.uploadImage(file, userId);
       console.log('✅ Cloudinary upload successful:', cloudinaryResponse.public_id);
+      console.log('🔗 Cloudinary secure_url:', cloudinaryResponse.secure_url);
 
       // Apply 300x300 crop: fill transformation using public method
       const transformedUrl = cloudinaryService.getOptimizedImageUrl(cloudinaryResponse.secure_url, 'profile');
@@ -78,7 +79,8 @@ class ProfileImageManager {
       console.log('🎉 Profile image upload completed successfully:', {
         userId,
         cloudinaryUrl: transformedUrl,
-        publicId: cloudinaryResponse.public_id
+        publicId: cloudinaryResponse.public_id,
+        originalUrl: cloudinaryResponse.secure_url
       });
 
       return transformedUrl;

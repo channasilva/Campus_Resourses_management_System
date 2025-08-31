@@ -104,9 +104,20 @@ const Dashboard: React.FC = () => {
 
           // Load profile image from Firebase
           console.log('Loading profile image for user:', user.id, 'type:', typeof user.id);
-          const savedImage = await profileImageManager.getProfileImage(user.id);
-          console.log('Profile image loaded:', savedImage ? 'found' : 'not found');
-          setProfileImage(savedImage);
+          try {
+            const savedImage = await profileImageManager.getProfileImage(user.id);
+            console.log('Profile image loaded:', savedImage ? 'found' : 'not found', 'URL:', savedImage);
+            setProfileImage(savedImage);
+
+            // Also update the user object with the profile picture if found
+            if (savedImage) {
+              user.profilePicture = savedImage;
+              setCurrentUser(user);
+            }
+          } catch (error) {
+            console.error('Error loading profile image:', error);
+            setProfileImage(null);
+          }
         } else {
           console.log('❌ No user data found in localStorage');
           navigate('/login');
@@ -378,7 +389,15 @@ const Dashboard: React.FC = () => {
 
       // Update state to display the image immediately
       setProfileImage(imageUrl);
-      console.log('Profile image state updated');
+      console.log('Profile image state updated to:', imageUrl);
+
+      // Force a re-render by updating the currentUser state if needed
+      if (currentUser) {
+        setCurrentUser({
+          ...currentUser,
+          profilePicture: imageUrl
+        });
+      }
 
       // Verify the image was saved by fetching from Firebase
       const savedImage = await profileImageManager.getProfileImage(currentUser.id);
