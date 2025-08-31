@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, User, Mail, Building, FileText, Lock, Eye, EyeOff, Camera, Upload, Trash2, Settings } from 'lucide-react';
+import { X, User, Mail, Building, FileText, Lock, Eye, EyeOff, Camera, Upload, Trash2 } from 'lucide-react';
 import { firebaseService } from '../services/firebase-service';
 import { cloudinaryService } from '../services/cloudinary-service';
 import Button from './Button';
@@ -32,7 +32,8 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(currentUser?.profilePicture || null);
-  const [cloudinaryStatus, setCloudinaryStatus] = useState(cloudinaryService.getConfigurationStatus());
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: string, value: string) => {
@@ -64,27 +65,54 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     if (!selectedImage || !currentUser) return;
 
     setIsUploadingImage(true);
+    setUploadProgress(0);
+    setUploadStatus('Preparing upload...');
+
     try {
       console.log('Starting image upload for user:', currentUser.id);
-      console.log('Cloudinary status:', cloudinaryStatus);
+
+      // Simulate progress updates for better UX
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const newProgress = prev + Math.random() * 15;
+          if (newProgress >= 90) {
+            clearInterval(progressInterval);
+            setUploadStatus('Processing image...');
+            return 90;
+          }
+          setUploadStatus(`Uploading... ${Math.round(newProgress)}%`);
+          return newProgress;
+        });
+      }, 200);
 
       const result = await cloudinaryService.uploadImage(selectedImage, currentUser.id);
       const imageUrl = result.secure_url;
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setUploadStatus('Upload complete!');
 
       console.log('Upload successful, image URL:', imageUrl);
 
       // Update form data with new image URL
       setFormData(prev => ({ ...prev, profilePicture: imageUrl }));
 
-      // Clear selected image
-      setSelectedImage(null);
-
-      // Update preview
+      // Update preview immediately
       setImagePreview(imageUrl);
 
-      toast.success('Profile picture uploaded successfully to Cloudinary!');
+      // Clear selected image after a short delay
+      setTimeout(() => {
+        setSelectedImage(null);
+        setUploadProgress(0);
+        setUploadStatus('');
+      }, 1500);
+
+      toast.success('Profile picture uploaded successfully! 🎉');
+
     } catch (error: any) {
       console.error('Image upload failed:', error);
+      setUploadProgress(0);
+      setUploadStatus('');
 
       let errorMessage = 'Failed to upload image';
 
@@ -359,17 +387,37 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   </div>
                 )}
 
+                {/* Upload Progress */}
+                {isUploadingImage && (
+                  <div className="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        {uploadStatus}
+                      </div>
+                      <div className="text-sm text-blue-600 dark:text-blue-400">
+                        {Math.round(uploadProgress)}%
+                      </div>
+                    </div>
+                    <div className="w-full bg-blue-200 dark:bg-blue-700 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Configuration Status */}
                 <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
                   <div className="flex items-center justify-between">
                     <div className="text-sm">
-                      <span className="font-medium">Cloudinary Status: </span>
+                      <span className="font-medium">Upload Status: </span>
                       <span className="text-green-600 dark:text-green-400">
-                        ✅ Configured & Ready
+                        ✅ Ready for Upload
                       </span>
                     </div>
                     <div className="text-xs text-green-600 dark:text-green-400">
-                      Real image uploads enabled
+                      Cloudinary integration active
                     </div>
                   </div>
                 </div>
@@ -377,60 +425,6 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Cloudinary Configuration Section (Admin Only) */}
-          {currentUser?.role?.toLowerCase() === 'admin' && (
-            <div className="space-y-4 pt-6 border-t">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
-                <Settings className="w-5 h-5 mr-2" />
-                Cloudinary Configuration
-              </h3>
-
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
-                <p className="text-sm text-yellow-800 dark:text-yellow-400 mb-3">
-                  <strong>Configure Cloudinary for Image Uploads:</strong>
-                </p>
-
-                <div className="space-y-3">
-                  <div className="text-xs text-yellow-700 dark:text-yellow-300">
-                    <p><strong>Cloud Name:</strong> Your Cloudinary cloud name (found in your Cloudinary dashboard)</p>
-                    <p><strong>Upload Preset:</strong> Create an unsigned upload preset in your Cloudinary settings</p>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      placeholder="Enter cloud name"
-                      className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      onChange={(e) => {
-                        const cloudName = e.target.value.trim();
-                        if (cloudName) {
-                          cloudinaryService.configure(cloudName, cloudinaryStatus.uploadPreset);
-                          setCloudinaryStatus(cloudinaryService.getConfigurationStatus());
-                        }
-                      }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Enter upload preset"
-                      className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      onChange={(e) => {
-                        const uploadPreset = e.target.value.trim();
-                        if (uploadPreset) {
-                          cloudinaryService.configure(cloudinaryStatus.cloudName, uploadPreset);
-                          setCloudinaryStatus(cloudinaryService.getConfigurationStatus());
-                        }
-                      }}
-                    />
-                  </div>
-
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Current: Cloud Name: <strong>{cloudinaryStatus.cloudName}</strong> |
-                    Upload Preset: <strong>{cloudinaryStatus.uploadPreset}</strong>
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
                       {/* Password Change Section */}
            <div className="space-y-4 pt-6 border-t">
