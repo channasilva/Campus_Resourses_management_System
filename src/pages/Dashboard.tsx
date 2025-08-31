@@ -39,6 +39,7 @@ import { User as UserType } from '../types/auth';
 import { formatLocalDateTime, formatLocalTime } from '../utils/date-utils';
 import toast, { Toaster } from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
+import { profileImageManager } from '../utils/profileImageManager';
 
 import AddResourceModal from '../components/AddResourceModal';
 import EditResourceModal from '../components/EditResourceModal';
@@ -73,6 +74,7 @@ const Dashboard: React.FC = () => {
   const [isCreateNotificationOpen, setIsCreateNotificationOpen] = useState(false);
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -84,16 +86,20 @@ const Dashboard: React.FC = () => {
           console.log('👤 Current user data:', user);
           console.log('🔍 User role:', user.role, 'Role type:', typeof user.role);
           console.log('🆔 User ID:', user.id, 'ID type:', typeof user.id);
-          
+
           if (!user.id) {
             console.error('❌ User ID not found in user data');
             toast.error('User data is incomplete. Please log in again.');
             navigate('/login');
             return;
           }
-          
+
           setCurrentUser(user);
           await loadDashboardData(user.id, user.role);
+
+          // Load profile image from localStorage
+          const savedImage = profileImageManager.getProfileImage(user.id);
+          setProfileImage(savedImage);
         } else {
           console.log('❌ No user data found in localStorage');
           navigate('/login');
@@ -343,6 +349,30 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    try {
+      console.log('Uploading profile image:', file.name, file.size, file.type);
+
+      // Save image using profile image manager
+      const imageUrl = await profileImageManager.saveProfileImage(file, currentUser.id);
+
+      // Update state to display the image
+      setProfileImage(imageUrl);
+
+      toast.success('Profile image uploaded successfully!');
+
+      // Clear the input value to allow re-uploading the same file
+      event.target.value = '';
+
+    } catch (error) {
+      console.error('Profile image upload failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload profile image');
+    }
+  };
+
   const handleDeleteNotification = async (notificationId: string) => {
     if (window.confirm('Are you sure you want to delete this notification?')) {
       try {
@@ -438,27 +468,47 @@ const Dashboard: React.FC = () => {
                 </div>
               )}
               
-              {/* User Profile Section */}
+              {/* User Profile Section with Image Upload */}
               <div className="flex items-center space-x-4 p-3 rounded-2xl bg-white/50 dark:bg-secondary-800/50 backdrop-blur-sm border border-secondary-200/50 dark:border-secondary-700/50 hover:bg-white/70 dark:hover:bg-secondary-800/70 transition-all duration-300 animate-fade-in-up">
-                <div className="relative">
-                  {currentUser?.profilePicture ? (
+                <div className="relative group">
+                  {profileImage ? (
                     <img
-                      src={currentUser.profilePicture}
-                      alt={`${currentUser.username}'s profile`}
-                      className="w-12 h-12 rounded-2xl object-cover shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 border-white dark:border-secondary-800"
+                      src={profileImage}
+                      alt={`${currentUser?.username}'s profile`}
+                      className="w-12 h-12 rounded-2xl object-cover shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 border-white dark:border-secondary-800 cursor-pointer"
+                      onClick={() => document.getElementById('profile-image-input')?.click()}
+                      title="Click to change profile image"
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <div
+                      className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+                      onClick={() => document.getElementById('profile-image-input')?.click()}
+                      title="Click to upload profile image"
+                    >
                       <User className="w-6 h-6 text-white" />
                     </div>
                   )}
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-secondary-800 animate-pulse" />
+                  {/* Upload overlay */}
+                  <div className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="text-white text-xs font-medium">
+                      {profileImage ? 'Change' : 'Upload'}
+                    </div>
+                  </div>
+                  {/* Hidden file input */}
+                  <input
+                    id="profile-image-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfileImageUpload}
+                  />
                 </div>
                 <div className="text-sm">
-                  <p className="font-semibold text-secondary-900 dark:text-secondary-100">{currentUser.username}</p>
+                  <p className="font-semibold text-secondary-900 dark:text-secondary-100">{currentUser?.username}</p>
                   <p className="text-secondary-500 dark:text-secondary-400 capitalize flex items-center gap-1">
                     <Shield className="w-3 h-3" />
-                    {currentUser.role}
+                    {currentUser?.role}
                   </p>
                 </div>
               </div>
@@ -490,28 +540,48 @@ const Dashboard: React.FC = () => {
           {/* Enhanced Mobile Menu */}
           {isMobileMenuOpen && (
             <div className="lg:hidden border-t border-secondary-200/50 dark:border-secondary-700/50 py-6 space-y-6 animate-fade-in-down">
-              {/* User Profile Card */}
+              {/* User Profile Card with Image Upload */}
               <div className="card-interactive p-4 animate-scale-in">
                 <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    {currentUser?.profilePicture ? (
+                  <div className="relative group">
+                    {profileImage ? (
                       <img
-                        src={currentUser.profilePicture}
-                        alt={`${currentUser.username}'s profile`}
-                        className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white dark:border-secondary-800"
+                        src={profileImage}
+                        alt={`${currentUser?.username}'s profile`}
+                        className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white dark:border-secondary-800 cursor-pointer"
+                        onClick={() => document.getElementById('profile-image-input-mobile')?.click()}
+                        title="Click to change profile image"
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
+                      <div
+                        className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg cursor-pointer"
+                        onClick={() => document.getElementById('profile-image-input-mobile')?.click()}
+                        title="Click to upload profile image"
+                      >
                         <User className="w-6 h-6 text-white" />
                       </div>
                     )}
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-secondary-800 animate-pulse" />
+                    {/* Upload overlay */}
+                    <div className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <div className="text-white text-xs font-medium">
+                        {profileImage ? 'Change' : 'Upload'}
+                      </div>
+                    </div>
+                    {/* Hidden file input for mobile */}
+                    <input
+                      id="profile-image-input-mobile"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleProfileImageUpload}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-secondary-900 dark:text-secondary-100 text-base">{currentUser.username}</p>
+                    <p className="font-semibold text-secondary-900 dark:text-secondary-100 text-base">{currentUser?.username}</p>
                     <p className="text-secondary-500 dark:text-secondary-400 text-sm capitalize flex items-center gap-1">
                       <Shield className="w-3 h-3" />
-                      {currentUser.role}
+                      {currentUser?.role}
                     </p>
                   </div>
                 </div>

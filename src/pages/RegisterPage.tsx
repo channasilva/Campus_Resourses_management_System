@@ -164,7 +164,7 @@ const RegisterPage: React.FC = () => {
             label="Username"
             type="text"
             value={formData.username}
-            onChange={(value) => handleInputChange('username', value)}
+            onChange={(e) => handleInputChange('username', e.target.value)}
             error={errors.username}
             placeholder="Enter your username"
             required
@@ -174,24 +174,24 @@ const RegisterPage: React.FC = () => {
             label="Email Address"
             type="email"
             value={formData.email}
-            onChange={(value) => handleInputChange('email', value)}
+            onChange={(e) => handleInputChange('email', e.target.value)}
             error={errors.email}
             placeholder="Enter your email"
             required
           />
 
-                           <Input
-                   label="Role"
-                   type="select"
-                   value={formData.role}
-                   onChange={(value) => handleInputChange('role', value)}
-                   error={errors.role}
-                   options={[
-                     { value: 'student', label: 'Student' },
-                     { value: 'lecturer', label: 'Lecturer' }
-                   ]}
-                   required
-                 />
+          <Input
+            label="Role"
+            type="select"
+            value={formData.role}
+            onChange={(value) => handleInputChange('role', value)}
+            error={errors.role}
+            options={[
+              { value: 'student', label: 'Student' },
+              { value: 'lecturer', label: 'Lecturer' }
+            ]}
+            required
+          />
 
           {formData.role === 'lecturer' && (
             <Input
@@ -209,7 +209,7 @@ const RegisterPage: React.FC = () => {
             label="Password"
             type="password"
             value={formData.password}
-            onChange={(value) => handleInputChange('password', value)}
+            onChange={(e) => handleInputChange('password', e.target.value)}
             error={errors.password}
             placeholder="Create a strong password"
             required
@@ -219,7 +219,7 @@ const RegisterPage: React.FC = () => {
             label="Confirm Password"
             type="password"
             value={formData.confirmPassword}
-            onChange={(value) => handleInputChange('confirmPassword', value)}
+            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
             error={errors.confirmPassword}
             placeholder="Confirm your password"
             required
