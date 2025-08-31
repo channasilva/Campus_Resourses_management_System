@@ -674,34 +674,34 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="stat-card-success hover-lift animate-fade-in-up group" style={{ animationDelay: '0.2s' }}>
+                <div className="stat-card hover-lift animate-fade-in-up group" style={{ animationDelay: '0.2s' }}>
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
-                      <p className="text-sm font-semibold text-success-600 dark:text-success-400 uppercase tracking-wide">Your Bookings</p>
-                      <p className="text-4xl font-bold text-success-900 dark:text-success-100 group-hover:scale-110 transition-transform duration-300">{bookings.length}</p>
+                      <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wide">Your Bookings</p>
+                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">{bookings.length}</p>
                       <p className="text-xs text-secondary-500 dark:text-secondary-400">Active reservations</p>
                     </div>
                     <div className="relative">
-                      <div className="p-4 bg-success-100 dark:bg-success-800 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                        <Calendar className="w-8 h-8 text-success-600 dark:text-success-400" />
+                      <div className="p-4 bg-primary-100 dark:bg-primary-800 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                        <Calendar className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                       </div>
-                      <div className="absolute inset-0 bg-success-600/20 dark:bg-success-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute inset-0 bg-primary-600/20 dark:bg-primary-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
                 </div>
 
-                <div className="stat-card-warning hover-lift animate-fade-in-up group" style={{ animationDelay: '0.3s' }}>
+                <div className="stat-card hover-lift animate-fade-in-up group" style={{ animationDelay: '0.3s' }}>
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
-                      <p className="text-sm font-semibold text-warning-600 dark:text-warning-400 uppercase tracking-wide">Notifications</p>
-                      <p className="text-4xl font-bold text-warning-900 dark:text-warning-100 group-hover:scale-110 transition-transform duration-300">{notifications.length}</p>
+                      <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wide">Notifications</p>
+                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">{notifications.length}</p>
                       <p className="text-xs text-secondary-500 dark:text-secondary-400">Unread messages</p>
                     </div>
                     <div className="relative">
-                      <div className="p-4 bg-warning-100 dark:bg-warning-800 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                        <Mail className="w-8 h-8 text-warning-600 dark:text-warning-400" />
+                      <div className="p-4 bg-primary-100 dark:bg-primary-800 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                        <Mail className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                       </div>
-                      <div className="absolute inset-0 bg-warning-600/20 dark:bg-warning-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute inset-0 bg-primary-600/20 dark:bg-primary-400/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
                 </div>
