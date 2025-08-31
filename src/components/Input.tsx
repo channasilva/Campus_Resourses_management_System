@@ -222,6 +222,7 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
       'dark:text-secondary-100',
       'placeholder-secondary-400',
       'dark:placeholder-secondary-500',
+      'relative', // Ensure input is positioned
       className
     );
 
@@ -385,8 +386,6 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
                 'focus:outline-none',
                 'focus:text-primary-600',
                 'dark:focus:text-primary-400',
-                'min-h-touch',
-                'min-w-touch',
                 'flex',
                 'items-center',
                 'justify-center',
@@ -416,19 +415,6 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
             </div>
           )}
 
-          {/* Focus Ring Effect */}
-          <div
-            className={cn(
-              'absolute',
-              'inset-0',
-              'rounded-xl',
-              'pointer-events-none',
-              'transition-all',
-              'duration-300',
-              isFocused && !error && 'ring-2 ring-primary-500/20',
-              error && isFocused && 'ring-2 ring-error-500/20'
-            )}
-          />
         </div>
 
         {/* Error Message */}
