@@ -219,12 +219,13 @@ class CloudinaryService {
    * @param size - The desired size (thumbnail, small, medium, large)
    * @returns Optimized image URL
    */
-  getOptimizedImageUrl(baseUrl: string, size: 'thumbnail' | 'small' | 'medium' | 'large' = 'medium'): string {
+  getOptimizedImageUrl(baseUrl: string, size: 'thumbnail' | 'small' | 'medium' | 'large' | 'profile' = 'medium'): string {
     const transformations = {
       thumbnail: 'w_50,h_50,c_fill,g_face,f_auto,q_auto',
       small: 'w_100,h_100,c_fill,g_face,f_auto,q_auto',
       medium: 'w_200,h_200,c_fill,g_face,f_auto,q_auto',
-      large: 'w_400,h_400,c_fill,g_face,f_auto,q_auto'
+      large: 'w_400,h_400,c_fill,g_face,f_auto,q_auto',
+      profile: 'w_300,h_300,c_fill,f_auto,q_auto'
     };
 
     // Insert transformation parameters into the URL

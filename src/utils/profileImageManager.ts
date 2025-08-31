@@ -63,8 +63,8 @@ class ProfileImageManager {
       const cloudinaryResponse = await cloudinaryService.uploadImage(file, userId);
       console.log('✅ Cloudinary upload successful:', cloudinaryResponse.public_id);
 
-      // Apply 300x300 crop: fill transformation
-      const transformedUrl = cloudinaryService.applyTransformationToUrl(cloudinaryResponse.secure_url, 'w_300,h_300,c_fill,f_auto,q_auto');
+      // Apply 300x300 crop: fill transformation using public method
+      const transformedUrl = cloudinaryService.getOptimizedImageUrl(cloudinaryResponse.secure_url, 'profile');
       console.log('🎨 Applied 300x300 crop: fill transformation:', transformedUrl);
 
       // Save URL to Firebase user profile
