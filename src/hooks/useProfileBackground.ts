@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { profileImageManager } from '../utils/profileImageManager';
+// DEPRECATED: This hook was causing profile images to appear as page backgrounds
+// Profile images should only appear in profile components, not as page backgrounds
+// This hook is kept for backward compatibility but does nothing
 
 interface UseProfileBackgroundReturn {
   backgroundImage: string | null;
@@ -9,52 +10,19 @@ interface UseProfileBackgroundReturn {
 }
 
 export const useProfileBackground = (): UseProfileBackgroundReturn => {
-  const [backgroundImage, setBackgroundImageState] = useState<string | null>(null);
+  console.warn('⚠️ useProfileBackground hook is deprecated and should not be used. Profile images should not be used as page backgrounds.');
 
-  // Load background from localStorage on mount
-  useEffect(() => {
-    const savedBackground = localStorage.getItem('profileBackground');
-    if (savedBackground) {
-      setBackgroundImageState(savedBackground);
-    }
-  }, []);
-
-  const setBackgroundImage = (url: string | null) => {
-    setBackgroundImageState(url);
-    if (url) {
-      localStorage.setItem('profileBackground', url);
-    } else {
-      localStorage.removeItem('profileBackground');
-    }
-  };
-
-  const loadUserBackground = async (userId: string) => {
-    try {
-      console.log('🖼️ Loading user background for:', userId);
-      const profileImageUrl = await profileImageManager.getProfileImage(userId);
-      
-      if (profileImageUrl) {
-        console.log('✅ Profile image found, setting as background:', profileImageUrl);
-        setBackgroundImage(profileImageUrl);
-      } else {
-        console.log('ℹ️ No profile image found for user');
-        setBackgroundImage(null);
-      }
-    } catch (error) {
-      console.error('❌ Failed to load user background:', error);
-      setBackgroundImage(null);
-    }
-  };
-
-  const clearBackground = () => {
-    console.log('🧹 Clearing profile background');
-    setBackgroundImage(null);
-  };
-
+  // Return no-op functions to prevent breaking existing code
   return {
-    backgroundImage,
-    setBackgroundImage,
-    loadUserBackground,
-    clearBackground
+    backgroundImage: null,
+    setBackgroundImage: () => {
+      console.warn('⚠️ setBackgroundImage is deprecated - profile images should not be used as backgrounds');
+    },
+    loadUserBackground: async () => {
+      console.warn('⚠️ loadUserBackground is deprecated - profile images should not be used as backgrounds');
+    },
+    clearBackground: () => {
+      console.warn('⚠️ clearBackground is deprecated - profile images should not be used as backgrounds');
+    }
   };
 };

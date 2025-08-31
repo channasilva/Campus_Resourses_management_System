@@ -5,12 +5,10 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import { LoginFormData } from '../types/auth';
 import { validateEmail } from '../utils/validation';
-import { useProfileBackground } from '../hooks/useProfileBackground';
 import toast, { Toaster } from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { backgroundImage, loadUserBackground, clearBackground } = useProfileBackground();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -18,21 +16,6 @@ const LoginPage: React.FC = () => {
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load background on component mount
-  useEffect(() => {
-    // Check if user is already logged in and load their background
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        if (user.id) {
-          loadUserBackground(user.id);
-        }
-      } catch (error) {
-        console.error('Failed to parse saved user:', error);
-      }
-    }
-  }, [loadUserBackground]);
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -76,8 +59,6 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
       
-      // Load user's profile background
-      await loadUserBackground(user.id);
       
       console.log('✅ Login successful:', user);
       toast.success(`Welcome back, ${user.username}!`);
@@ -106,8 +87,6 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
       
-      // Load user's profile background
-      await loadUserBackground(user.id);
       
       console.log('✅ Google Sign-In successful:', user);
       toast.success(`Welcome back, ${user.username}!`);
@@ -121,26 +100,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 transition-all duration-300 relative"
-      style={{
-        background: backgroundImage
-          ? `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url(${backgroundImage})`
-          : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      {/* Fallback background for when no profile image is set */}
-      {!backgroundImage && (
-        <div className="absolute inset-0 bg-gray-50 dark:bg-gray-900 -z-10" />
-      )}
-      
-      {/* Background overlay for better text readability */}
-      {backgroundImage && (
-        <div className="absolute inset-0 bg-black/20 dark:bg-black/40 -z-10" />
-      )}
+    <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
       <Toaster position="top-center" />
       <div className="max-w-md w-full space-y-6 sm:space-y-8">
         {/* Header - Mobile optimized */}

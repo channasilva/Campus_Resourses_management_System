@@ -40,7 +40,6 @@ import { formatLocalDateTime, formatLocalTime } from '../utils/date-utils';
 import toast, { Toaster } from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
 import { profileImageManager } from '../utils/profileImageManager';
-import { useProfileBackground } from '../hooks/useProfileBackground';
 import ProfileImageUpload from '../components/ProfileImageUpload';
 
 import AddResourceModal from '../components/AddResourceModal';
@@ -59,7 +58,6 @@ import AdvancedAnalytics from '../components/AdvancedAnalytics';
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { loadUserBackground, clearBackground } = useProfileBackground();
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -106,10 +104,6 @@ const Dashboard: React.FC = () => {
             console.log('Profile image loaded:', savedImage ? 'found' : 'not found');
             setProfileImage(savedImage);
             
-            // Also load as background
-            if (savedImage) {
-              await loadUserBackground(user.id);
-            }
           } catch (error) {
             console.error('Error loading profile image:', error);
             setProfileImage(null);
@@ -181,8 +175,6 @@ const Dashboard: React.FC = () => {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       
-      // Clear profile background
-      clearBackground();
       
       navigate('/login');
     } catch (error) {
@@ -382,8 +374,6 @@ const Dashboard: React.FC = () => {
       // Update localStorage
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
-      // Update background
-      await loadUserBackground(currentUser.id);
     }
   };
 
@@ -402,8 +392,6 @@ const Dashboard: React.FC = () => {
       // Update localStorage
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
-      // Clear background
-      clearBackground();
     }
   };
 
