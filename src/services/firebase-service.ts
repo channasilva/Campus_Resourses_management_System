@@ -160,6 +160,25 @@ class FirebaseService {
     }
   }
 
+  async getUserById(userId: string): Promise<User | null> {
+    try {
+      console.log('🔍 Fetching user by ID:', userId);
+      const userDoc = await getDoc(doc(db, 'users', userId));
+
+      if (!userDoc.exists()) {
+        console.log('❌ User not found:', userId);
+        return null;
+      }
+
+      const userData = { id: userDoc.id, ...userDoc.data() } as User;
+      console.log('✅ User found:', userData.username);
+      return userData;
+    } catch (error: any) {
+      console.error('❌ Error fetching user by ID:', error);
+      throw new Error(error.message);
+    }
+  }
+
   // Helper method to check if user exists in Firestore
   async checkUserExists(userId: string): Promise<boolean> {
     try {

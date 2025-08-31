@@ -204,7 +204,7 @@ class CloudinaryService {
    * @param transformation - The transformation string (e.g., "w_300,h_300,c_fill")
    * @returns Transformed image URL
    */
-  private applyTransformationToUrl(baseUrl: string, transformation: string = 'w_300,h_300,c_fill'): string {
+  private applyTransformationToUrl(baseUrl: string, transformation: string = 'w_300,h_300,c_fill,f_auto,q_auto'): string {
     // Insert transformation parameters into the URL after "/upload/"
     const urlParts = baseUrl.split('/upload/');
     if (urlParts.length === 2) {

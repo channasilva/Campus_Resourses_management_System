@@ -1,10 +1,14 @@
 /**
- * Client-side Profile Image Manager
- * Handles profile image upload, localStorage persistence, and base64 encoding
+ * Cloudinary + Firebase Profile Image Manager
+ * Handles profile image upload to Cloudinary, Firebase persistence, and URL management
  */
 
+import { cloudinaryService } from '../services/cloudinary-service';
+import { firebaseService } from '../services/firebase-service';
+
 interface ProfileImageData {
-  base64: string;
+  cloudinaryUrl: string;
+  publicId: string;
   fileName: string;
   fileSize: number;
   uploadedAt: string;
@@ -12,7 +16,6 @@ interface ProfileImageData {
 }
 
 class ProfileImageManager {
-  private readonly STORAGE_KEY = 'campus_profile_image';
   private readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   private readonly ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -39,130 +42,106 @@ class ProfileImageManager {
     return { isValid: true };
   }
 
-  /**
-   * Convert file to base64 string
-   */
-  private fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result);
-      };
-      reader.onerror = () => {
-        reject(new Error('Failed to read file'));
-      };
-      reader.readAsDataURL(file);
-    });
-  }
 
   /**
-   * Save profile image to localStorage
+   * Upload profile image to Cloudinary and save URL to Firebase
    */
   async saveProfileImage(file: File, userId: string): Promise<string> {
     try {
+      console.log('🚀 Starting profile image upload process for user:', userId);
+
       // Validate file
       const validation = this.validateImageFile(file);
       if (!validation.isValid) {
         throw new Error(validation.error);
       }
 
-      // Convert to base64
-      const base64 = await this.fileToBase64(file);
+      console.log('✅ File validation passed');
 
-      // Create image data object
-      const imageData: ProfileImageData = {
-        base64,
-        fileName: file.name,
-        fileSize: file.size,
-        uploadedAt: new Date().toISOString(),
-        userId
-      };
+      // Upload to Cloudinary
+      console.log('📤 Uploading to Cloudinary...');
+      const cloudinaryResponse = await cloudinaryService.uploadImage(file, userId);
+      console.log('✅ Cloudinary upload successful:', cloudinaryResponse.public_id);
 
-      // Save to localStorage
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(imageData));
+      // Apply 300x300 crop: fill transformation
+      const transformedUrl = cloudinaryService.applyTransformationToUrl(cloudinaryResponse.secure_url, 'w_300,h_300,c_fill,f_auto,q_auto');
+      console.log('🎨 Applied 300x300 crop: fill transformation:', transformedUrl);
 
-      console.log('Profile image saved successfully:', {
-        fileName: file.name,
-        fileSize: file.size,
-        userId
+      // Save URL to Firebase user profile
+      console.log('💾 Saving to Firebase user profile...');
+      await firebaseService.updateUserProfile(userId, {
+        profilePicture: transformedUrl,
+        profilePicturePublicId: cloudinaryResponse.public_id
+      });
+      console.log('✅ Firebase profile updated successfully');
+
+      console.log('🎉 Profile image upload completed successfully:', {
+        userId,
+        cloudinaryUrl: transformedUrl,
+        publicId: cloudinaryResponse.public_id
       });
 
-      return base64;
+      return transformedUrl;
     } catch (error) {
-      console.error('Failed to save profile image:', error);
+      console.error('❌ Failed to save profile image:', error);
       throw error;
     }
   }
 
   /**
-   * Get profile image from localStorage
+   * Get profile image URL from Firebase user profile
    */
-  getProfileImage(userId?: string | number): string | null {
+  async getProfileImage(userId: string): Promise<string | null> {
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
-      if (!stored) {
-        console.log('No profile image found in localStorage');
+      console.log('🔍 Fetching profile image for user:', userId);
+
+      // Get user document from Firebase
+      const userDoc = await firebaseService.getUserById(userId);
+
+      if (!userDoc || !userDoc.profilePicture) {
+        console.log('No profile image found for user:', userId);
         return null;
       }
 
-      const imageData: ProfileImageData = JSON.parse(stored);
-      console.log('Retrieved profile image data:', {
-        storedUserId: imageData.userId,
-        storedUserIdType: typeof imageData.userId,
-        requestedUserId: userId,
-        requestedUserIdType: typeof userId
+      console.log('✅ Profile image found:', userDoc.profilePicture);
+      return userDoc.profilePicture;
+    } catch (error) {
+      console.error('❌ Failed to retrieve profile image:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Remove profile image from Firebase user profile
+   */
+  async removeProfileImage(userId: string): Promise<void> {
+    try {
+      console.log('🗑️ Removing profile image for user:', userId);
+
+      // Update Firebase user profile to remove profile picture
+      await firebaseService.updateUserProfile(userId, {
+        profilePicture: null,
+        profilePicturePublicId: null
       });
 
-      // If userId is provided, check if it matches (handle both string and number)
-      if (userId !== undefined) {
-        const storedUserId = String(imageData.userId);
-        const requestedUserId = String(userId);
-
-        if (storedUserId !== requestedUserId) {
-          console.log('UserId mismatch - stored:', storedUserId, 'requested:', requestedUserId);
-          return null;
-        }
-      }
-
-      console.log('Profile image found and matches userId');
-      return imageData.base64;
+      console.log('✅ Profile image removed successfully');
     } catch (error) {
-      console.error('Failed to retrieve profile image:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Remove profile image from localStorage
-   */
-  removeProfileImage(): void {
-    try {
-      localStorage.removeItem(this.STORAGE_KEY);
-      console.log('Profile image removed successfully');
-    } catch (error) {
-      console.error('Failed to remove profile image:', error);
-    }
-  }
-
-  /**
-   * Get profile image metadata
-   */
-  getProfileImageMetadata(): ProfileImageData | null {
-    try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch (error) {
-      console.error('Failed to get profile image metadata:', error);
-      return null;
+      console.error('❌ Failed to remove profile image:', error);
+      throw error;
     }
   }
 
   /**
    * Check if profile image exists
    */
-  hasProfileImage(userId?: string | number): boolean {
-    return this.getProfileImage(userId) !== null;
+  async hasProfileImage(userId: string): Promise<boolean> {
+    try {
+      const imageUrl = await this.getProfileImage(userId);
+      return imageUrl !== null;
+    } catch (error) {
+      console.error('❌ Error checking profile image existence:', error);
+      return false;
+    }
   }
 
   /**

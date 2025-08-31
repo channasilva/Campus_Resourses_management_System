@@ -102,9 +102,9 @@ const Dashboard: React.FC = () => {
           setCurrentUser(user);
           await loadDashboardData(user.id, user.role);
 
-          // Load profile image from localStorage
+          // Load profile image from Firebase
           console.log('Loading profile image for user:', user.id, 'type:', typeof user.id);
-          const savedImage = profileImageManager.getProfileImage(user.id);
+          const savedImage = await profileImageManager.getProfileImage(user.id);
           console.log('Profile image loaded:', savedImage ? 'found' : 'not found');
           setProfileImage(savedImage);
         } else {
@@ -374,15 +374,15 @@ const Dashboard: React.FC = () => {
 
       // Save image using profile image manager
       const imageUrl = await profileImageManager.saveProfileImage(file, currentUser.id);
-      console.log('Image saved successfully, URL length:', imageUrl.length);
+      console.log('Image saved successfully, URL:', imageUrl);
 
-      // Update state to display the image
+      // Update state to display the image immediately
       setProfileImage(imageUrl);
       console.log('Profile image state updated');
 
-      // Verify the image was set by checking localStorage
-      const savedImage = profileImageManager.getProfileImage(currentUser.id);
-      console.log('Verification - image retrieved from storage:', savedImage ? 'success' : 'failed');
+      // Verify the image was saved by fetching from Firebase
+      const savedImage = await profileImageManager.getProfileImage(currentUser.id);
+      console.log('Verification - image retrieved from Firebase:', savedImage ? 'success' : 'failed');
 
       toast.success('Profile image uploaded successfully!');
 
