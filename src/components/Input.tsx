@@ -415,8 +415,8 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
               'pointer-events-none',
               'transition-all',
               'duration-300',
-              isFocused && !error && 'ring-2 ring-primary-500/20 ring-offset-2 dark:ring-offset-secondary-800',
-              error && isFocused && 'ring-2 ring-error-500/20 ring-offset-2 dark:ring-offset-secondary-800'
+              isFocused && !error && 'ring-2 ring-primary-500/20',
+              error && isFocused && 'ring-2 ring-error-500/20'
             )}
           />
         </div>

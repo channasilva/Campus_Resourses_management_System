@@ -100,7 +100,7 @@ const CreateNotificationModal: React.FC<CreateNotificationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white/95 backdrop-blur-xl rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900">
             Create System Notification
@@ -163,9 +163,9 @@ const CreateNotificationModal: React.FC<CreateNotificationModalProps> = ({
 
           {/* Preview */}
           {(formData.title || formData.message) && (
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50/80 backdrop-blur-sm rounded-lg p-4">
               <h4 className="font-medium text-gray-900 mb-2">Preview</h4>
-              <div className="border border-gray-200 rounded-lg p-4 bg-white">
+              <div className="border border-gray-200 rounded-lg p-4 bg-white/90 backdrop-blur-sm">
                 {formData.title && (
                   <h5 className="font-semibold text-gray-900 mb-2">{formData.title}</h5>
                 )}
