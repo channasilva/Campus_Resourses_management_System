@@ -222,36 +222,40 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
           </div>
         )}
 
-        {/* Remove Button */}
+      </div>
+
+      {/* Upload and Remove Buttons */}
+      <div className="flex gap-2 mt-2">
+        {showUploadButton && (
+          <button
+            onClick={handleClick}
+            disabled={isUploading}
+            className={`
+              flex-1 ${config.button} bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400
+              text-white rounded-lg font-medium transition-colors duration-200
+              flex items-center justify-center gap-2
+            `}
+          >
+            <Upload className="w-4 h-4" />
+            {isUploading ? 'Uploading...' : currentImageUrl ? 'Change' : 'Upload'}
+          </button>
+        )}
+        
         {currentImageUrl && showRemoveButton && !isUploading && (
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRemoveImage();
-            }}
-            className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
+            onClick={handleRemoveImage}
+            className={`
+              ${config.button} bg-red-600 hover:bg-red-700 text-white rounded-lg
+              font-medium transition-colors duration-200 flex items-center justify-center gap-2
+              ${showUploadButton ? 'px-3' : 'flex-1'}
+            `}
             title="Remove profile image"
           >
-            <X className="w-3 h-3" />
+            <X className="w-4 h-4" />
+            {!showUploadButton && 'Remove'}
           </button>
         )}
       </div>
-
-      {/* Upload Button */}
-      {showUploadButton && (
-        <button
-          onClick={handleClick}
-          disabled={isUploading}
-          className={`
-            mt-2 ${config.button} bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 
-            text-white rounded-lg font-medium transition-colors duration-200 
-            flex items-center justify-center gap-2 w-full
-          `}
-        >
-          <Upload className="w-4 h-4" />
-          {isUploading ? 'Uploading...' : 'Upload Image'}
-        </button>
-      )}
 
       {/* File Input */}
       <input
@@ -282,11 +286,6 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
         </div>
       )}
 
-      {/* Help Text */}
-      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
-        <div>JPEG, PNG, WebP • Max 5MB</div>
-        <div>300×300 recommended</div>
-      </div>
     </div>
   );
 };
