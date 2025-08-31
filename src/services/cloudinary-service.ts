@@ -25,6 +25,7 @@ class CloudinaryService {
 
   constructor() {
     this.checkConfiguration();
+    console.log('Cloudinary service initialized with config:', this.getConfigurationStatus());
   }
 
   /**
@@ -64,34 +65,48 @@ class CloudinaryService {
    * @returns Promise with the upload response
    */
   async uploadImage(file: File, userId: string): Promise<CloudinaryUploadResponse> {
+    console.log('Upload attempt - Configuration status:', this.getConfigurationStatus());
+
     // Check if service is properly configured
     if (!this.isConfigured) {
+      console.error('Cloudinary service not configured properly');
       throw new Error('Cloudinary service is not properly configured. Please contact your administrator to set up the credentials.');
     }
 
     return new Promise((resolve, reject) => {
+      console.log('Creating FormData for upload...');
       const formData = new FormData();
 
       // Add the file
       formData.append('file', file);
+      console.log('File added to FormData:', file.name, file.size, file.type);
 
       // Add upload preset
       formData.append('upload_preset', this.uploadPreset);
+      console.log('Upload preset added:', this.uploadPreset);
 
       // Add public ID with user ID for organization
-      formData.append('public_id', `profile_${userId}_${Date.now()}`);
+      const publicId = `profile_${userId}_${Date.now()}`;
+      formData.append('public_id', publicId);
+      console.log('Public ID added:', publicId);
 
       // Add transformation for profile pictures (square crop, 300x300)
-      formData.append('transformation', JSON.stringify([
+      const transformation = JSON.stringify([
         { width: 300, height: 300, crop: 'fill', gravity: 'face' },
         { quality: 'auto' }
-      ]));
+      ]);
+      formData.append('transformation', transformation);
+      console.log('Transformation added:', transformation);
 
       const xhr = new XMLHttpRequest();
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
+      console.log('XHR request URL:', uploadUrl);
 
-      xhr.open('POST', `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`, true);
+      xhr.open('POST', uploadUrl, true);
+      console.log('XHR request opened');
 
       xhr.onload = () => {
+        console.log('XHR onload triggered, status:', xhr.status);
         console.log('Cloudinary upload response status:', xhr.status);
         console.log('Cloudinary upload response:', xhr.responseText);
 
@@ -128,8 +143,10 @@ class CloudinaryService {
 
       xhr.timeout = 30000; // 30 second timeout
 
-      console.log('Starting Cloudinary upload to:', `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`);
+      console.log('Starting Cloudinary upload to:', uploadUrl);
+      console.log('Sending FormData...');
       xhr.send(formData);
+      console.log('FormData sent, waiting for response...');
     });
   }
 

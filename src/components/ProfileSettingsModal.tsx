@@ -407,20 +407,6 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   </div>
                 )}
 
-                {/* Configuration Status */}
-                <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm">
-                      <span className="font-medium">Upload Status: </span>
-                      <span className="text-green-600 dark:text-green-400">
-                        ✅ Ready for Upload
-                      </span>
-                    </div>
-                    <div className="text-xs text-green-600 dark:text-green-400">
-                      Cloudinary integration active
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
