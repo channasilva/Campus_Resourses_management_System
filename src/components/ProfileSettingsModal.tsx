@@ -34,6 +34,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(currentUser?.profilePicture || null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: string, value: string) => {
@@ -136,6 +137,27 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     setSelectedImage(null);
     setImagePreview(currentUser?.profilePicture || null);
     setFormData(prev => ({ ...prev, profilePicture: currentUser?.profilePicture || '' }));
+  };
+
+  const handleTestConnection = async () => {
+    setIsTestingConnection(true);
+    try {
+      console.log('🧪 Starting Cloudinary connection test...');
+      const result = await cloudinaryService.testConnection();
+
+      if (result.success) {
+        console.log('✅ Test successful:', result);
+        toast.success('Cloudinary connection test successful! 🎉');
+      } else {
+        console.error('❌ Test failed:', result);
+        toast.error(`Connection test failed: ${result.message}`);
+      }
+    } catch (error: any) {
+      console.error('❌ Test error:', error);
+      toast.error(`Test error: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsTestingConnection(false);
+    }
   };
 
   const validateForm = (): boolean => {
@@ -373,6 +395,17 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                       Upload
                     </Button>
                   )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTestConnection}
+                    loading={isTestingConnection}
+                    className="ml-2"
+                  >
+                    Test Connection
+                  </Button>
                 </div>
 
                 <div className="text-sm text-gray-500 dark:text-gray-400">
