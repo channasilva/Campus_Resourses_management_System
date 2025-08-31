@@ -75,10 +75,12 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
       'duration-300',
       'ease-out',
       'focus:outline-none',
+      'focus:ring-0',
       'disabled:opacity-50',
       'disabled:cursor-not-allowed',
       'disabled:bg-secondary-50',
       'dark:disabled:bg-secondary-800',
+      'cursor-text',
       fullWidth && 'w-full',
     ];
 
@@ -274,7 +276,10 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
             disabled={disabled}
             className={inputClasses}
             value={selectProps.value || ''}
-            onChange={(e) => onChange?.(e.target.value)}
+            onChange={(e) => {
+              console.log(`Input onChange: ${type} = "${e.target.value}"`);
+              onChange?.(e.target.value);
+            }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             aria-describedby={cn(error && errorId, helperText && helperId)}

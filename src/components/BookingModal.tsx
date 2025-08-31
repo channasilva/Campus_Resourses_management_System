@@ -27,7 +27,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     startTime: '',
     endTime: '',
     purpose: '',
-    attendees: '',
+    attendees: '1',
     notes: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -44,11 +44,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
   }, [isOpen]);
 
   const handleInputChange = (field: string, value: string) => {
+    console.log(`Input change: ${field} = "${value}"`);
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-    
+
     // Check for conflicts when date or time changes
     if (['startDate', 'startTime', 'endTime'].includes(field)) {
       checkForConflicts();
@@ -208,7 +209,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         startTime: '',
         endTime: '',
         purpose: '',
-        attendees: '',
+        attendees: '1',
         notes: ''
       });
     } catch (error: any) {
@@ -222,7 +223,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
   if (!isOpen || !resource) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-xl w-full max-w-md sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
         {/* Mobile-optimized header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
@@ -238,7 +239,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6" noValidate>
           {/* Resource Info - Mobile optimized */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 mb-4">
             <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3 text-sm sm:text-base">Resource Details</h3>
@@ -252,44 +253,61 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Date and Time - Mobile responsive */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Start Date"
-              type="date"
-              value={formData.startDate}
-              onChange={(value) => handleInputChange('startDate', value)}
-              error={errors.startDate}
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Start Date *
+              </label>
+              <input
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => handleInputChange('startDate', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                required
+              />
+            </div>
             
-            <Input
-              label="Start Time"
-              type="time"
-              value={formData.startTime}
-              onChange={(value) => handleInputChange('startTime', value)}
-              error={errors.startTime}
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Start Time *
+              </label>
+              <input
+                type="time"
+                value={formData.startTime}
+                onChange={(e) => handleInputChange('startTime', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                required
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="End Time"
-              type="time"
-              value={formData.endTime}
-              onChange={(value) => handleInputChange('endTime', value)}
-              error={errors.endTime}
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                End Time *
+              </label>
+              <input
+                type="time"
+                value={formData.endTime}
+                onChange={(e) => handleInputChange('endTime', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                required
+              />
+            </div>
 
-            <Input
-              label="Number of Attendees"
-              type="number"
-              value={formData.attendees}
-              onChange={(value) => handleInputChange('attendees', value)}
-              placeholder="1"
-              min="1"
-              max={String(resource.capacity || 100)}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Number of Attendees
+              </label>
+              <input
+                type="number"
+                value={formData.attendees}
+                onChange={(e) => handleInputChange('attendees', e.target.value)}
+                placeholder="1"
+                min="1"
+                max={String(resource.capacity || 100)}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+            </div>
           </div>
 
           {/* Conflict Warning - Mobile optimized */}
@@ -335,15 +353,19 @@ const BookingModal: React.FC<BookingModalProps> = ({
           )}
 
           {/* Purpose */}
-          <Input
-            label="Purpose"
-            type="text"
-            value={formData.purpose}
-            onChange={(value) => handleInputChange('purpose', value)}
-            error={errors.purpose}
-            placeholder="e.g., Study session, Meeting, Lab work"
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Purpose *
+            </label>
+            <input
+              type="text"
+              value={formData.purpose}
+              onChange={(e) => handleInputChange('purpose', e.target.value)}
+              placeholder="e.g., Study session, Meeting, Lab work"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              required
+            />
+          </div>
 
           {/* Notes - Mobile optimized */}
           <div>
