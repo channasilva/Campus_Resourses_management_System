@@ -44,6 +44,28 @@ class ProfileImageManager {
 
 
   /**
+   * Save Google profile photo URL to Firebase (without uploading to Cloudinary)
+   */
+  async saveGoogleProfileImage(googlePhotoUrl: string, userId: string): Promise<string> {
+    try {
+      console.log('🚀 Saving Google profile image for user:', userId);
+      console.log('📸 Google photo URL:', googlePhotoUrl);
+
+      // Save Google photo URL directly to Firebase user profile
+      await firebaseService.updateUserProfile(userId, {
+        profilePicture: googlePhotoUrl,
+        profilePicturePublicId: null // Google photos don't have Cloudinary public IDs
+      });
+      
+      console.log('✅ Google profile image saved successfully');
+      return googlePhotoUrl;
+    } catch (error) {
+      console.error('❌ Failed to save Google profile image:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Upload profile image to Cloudinary and save URL to Firebase
    */
   async saveProfileImage(file: File, userId: string): Promise<string> {
@@ -134,6 +156,46 @@ class ProfileImageManager {
   }
 
   /**
+   * Update profile image from Google Sign-In if user doesn't have one
+   */
+  async updateFromGoogleIfNeeded(userId: string, googlePhotoUrl: string | null): Promise<string | null> {
+    try {
+      if (!googlePhotoUrl) {
+        console.log('ℹ️ No Google photo URL provided');
+        return null;
+      }
+
+      console.log('🔍 Checking if user needs Google profile image update');
+      
+      // Get current user profile
+      const userDoc = await firebaseService.getUserById(userId);
+      
+      if (!userDoc) {
+        console.log('❌ User not found');
+        return null;
+      }
+
+      // If user doesn't have a profile picture, use Google's
+      if (!userDoc.profilePicture) {
+        console.log('📸 User has no profile picture, using Google photo');
+        return await this.saveGoogleProfileImage(googlePhotoUrl, userId);
+      }
+
+      // If user has a Google profile picture but it's different, update it
+      if (userDoc.profilePicture.includes('googleusercontent.com') && userDoc.profilePicture !== googlePhotoUrl) {
+        console.log('🔄 Updating existing Google profile picture');
+        return await this.saveGoogleProfileImage(googlePhotoUrl, userId);
+      }
+
+      console.log('✅ User already has a profile picture, keeping existing one');
+      return userDoc.profilePicture;
+    } catch (error) {
+      console.error('❌ Failed to update from Google profile:', error);
+      return null;
+    }
+  }
+
+  /**
    * Check if profile image exists
    */
   async hasProfileImage(userId: string): Promise<boolean> {
@@ -142,6 +204,19 @@ class ProfileImageManager {
       return imageUrl !== null;
     } catch (error) {
       console.error('❌ Error checking profile image existence:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if current profile image is from Google
+   */
+  async isGoogleProfileImage(userId: string): Promise<boolean> {
+    try {
+      const imageUrl = await this.getProfileImage(userId);
+      return imageUrl ? imageUrl.includes('googleusercontent.com') : false;
+    } catch (error) {
+      console.error('❌ Error checking if profile image is from Google:', error);
       return false;
     }
   }

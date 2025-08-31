@@ -6,6 +6,7 @@ export interface User {
   department?: string;
   bio?: string;
   profilePicture?: string;
+  profilePicturePublicId?: string;
   contactInfo?: {
     phone?: string;
     office?: string;

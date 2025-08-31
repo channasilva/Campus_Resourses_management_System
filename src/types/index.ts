@@ -6,6 +6,7 @@ export interface User {
   role: 'admin' | 'lecturer' | 'student';
   department?: string;
   profilePicture?: string;
+  profilePicturePublicId?: string;
   contactInfo?: {
     phone?: string;
     office?: string;

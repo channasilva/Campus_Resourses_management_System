@@ -39,7 +39,8 @@ import { User as UserType } from '../types/auth';
 import { formatLocalDateTime, formatLocalTime } from '../utils/date-utils';
 import toast, { Toaster } from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
-import { profileImageUploader } from '../utils/profileImageUploader';
+import { profileImageManager } from '../utils/profileImageManager';
+import { useProfileBackground } from '../hooks/useProfileBackground';
 import ProfileImageUpload from '../components/ProfileImageUpload';
 
 import AddResourceModal from '../components/AddResourceModal';
@@ -58,6 +59,7 @@ import AdvancedAnalytics from '../components/AdvancedAnalytics';
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
+  const { loadUserBackground, clearBackground } = useProfileBackground();
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -98,11 +100,16 @@ const Dashboard: React.FC = () => {
           setCurrentUser(user);
           await loadDashboardData(user.id, user.role);
 
-          // Load profile image from the uploader system
+          // Load profile image from the manager system
           try {
-            const savedImage = await profileImageUploader.getCurrentProfileImage();
+            const savedImage = await profileImageManager.getProfileImage(user.id);
             console.log('Profile image loaded:', savedImage ? 'found' : 'not found');
             setProfileImage(savedImage);
+            
+            // Also load as background
+            if (savedImage) {
+              await loadUserBackground(user.id);
+            }
           } catch (error) {
             console.error('Error loading profile image:', error);
             setProfileImage(null);
@@ -173,6 +180,10 @@ const Dashboard: React.FC = () => {
       await firebaseService.logout();
       localStorage.removeItem('user');
       localStorage.removeItem('token');
+      
+      // Clear profile background
+      clearBackground();
+      
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -356,16 +367,23 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleProfileImageUploaded = (imageUrl: string) => {
+  const handleProfileImageUploaded = async (imageUrl: string) => {
     console.log('Profile image uploaded successfully:', imageUrl);
     setProfileImage(imageUrl);
     
     // Update current user state
     if (currentUser) {
-      setCurrentUser({
+      const updatedUser = {
         ...currentUser,
         profilePicture: imageUrl
-      });
+      };
+      setCurrentUser(updatedUser);
+      
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update background
+      await loadUserBackground(currentUser.id);
     }
   };
 
@@ -375,10 +393,17 @@ const Dashboard: React.FC = () => {
     
     // Update current user state
     if (currentUser) {
-      setCurrentUser({
+      const updatedUser = {
         ...currentUser,
         profilePicture: null
-      });
+      };
+      setCurrentUser(updatedUser);
+      
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Clear background
+      clearBackground();
     }
   };
 

@@ -1,20 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, GraduationCap } from 'lucide-react';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { LoginFormData } from '../types/auth';
 import { validateEmail } from '../utils/validation';
+import { useProfileBackground } from '../hooks/useProfileBackground';
 import toast, { Toaster } from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { backgroundImage, loadUserBackground, clearBackground } = useProfileBackground();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
   });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // Load background on component mount
+  useEffect(() => {
+    // Check if user is already logged in and load their background
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        if (user.id) {
+          loadUserBackground(user.id);
+        }
+      } catch (error) {
+        console.error('Failed to parse saved user:', error);
+      }
+    }
+  }, [loadUserBackground]);
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -58,6 +76,9 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
       
+      // Load user's profile background
+      await loadUserBackground(user.id);
+      
       console.log('✅ Login successful:', user);
       toast.success(`Welcome back, ${user.username}!`);
       navigate('/dashboard');
@@ -72,8 +93,54 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Import firebaseService dynamically to avoid circular imports
+      const { firebaseService } = await import('../services/firebase-service');
+      
+      const { user, token } = await firebaseService.signInWithGoogle();
+      
+      // Store user data in localStorage
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
+      
+      // Load user's profile background
+      await loadUserBackground(user.id);
+      
+      console.log('✅ Google Sign-In successful:', user);
+      toast.success(`Welcome back, ${user.username}!`);
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error('❌ Google Sign-In failed:', error);
+      toast.error(error.message || 'Google Sign-In failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300">
+    <div
+      className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 transition-all duration-300 relative"
+      style={{
+        background: backgroundImage
+          ? `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url(${backgroundImage})`
+          : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Fallback background for when no profile image is set */}
+      {!backgroundImage && (
+        <div className="absolute inset-0 bg-gray-50 dark:bg-gray-900 -z-10" />
+      )}
+      
+      {/* Background overlay for better text readability */}
+      {backgroundImage && (
+        <div className="absolute inset-0 bg-black/20 dark:bg-black/40 -z-10" />
+      )}
       <Toaster position="top-center" />
       <div className="max-w-md w-full space-y-6 sm:space-y-8">
         {/* Header - Mobile optimized */}
@@ -154,7 +221,13 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button variant="secondary" className="w-full mobile-button">
+              <Button
+                variant="secondary"
+                className="w-full mobile-button"
+                onClick={handleGoogleSignIn}
+                loading={isLoading}
+                disabled={isLoading}
+              >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>

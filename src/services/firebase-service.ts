@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
   updatePassword,
@@ -26,17 +27,18 @@ import {
   DocumentData
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { auth, db, storage } from '../config/firebase';
-import { 
-  User, 
-  Resource, 
-  Booking, 
-  BookingRequest, 
-  Notification, 
+import { auth, db, storage, googleProvider } from '../config/firebase';
+import { profileImageManager } from '../utils/profileImageManager';
+import {
+  User,
+  Resource,
+  Booking,
+  BookingRequest,
+  Notification,
   MaintenanceRecord,
   AuditLog,
   SystemSettings,
-  ProfileUpdateData 
+  ProfileUpdateData
 } from '../types';
 
 class FirebaseService {
@@ -148,6 +150,78 @@ class FirebaseService {
     } catch (error: any) {
       console.error('Login error:', error);
       throw new Error(error.message);
+    }
+  }
+
+  async signInWithGoogle(): Promise<{ user: User; token: string }> {
+    try {
+      console.log('🚀 Starting Google Sign-In process...');
+      
+      // Sign in with Google popup
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseUser = result.user;
+      
+      console.log('✅ Google Sign-In successful:', firebaseUser.email);
+      
+      // Check if user exists in our system by email
+      const existingUsers = await this.getAllUsers();
+      const existingUser = existingUsers.find(user => user.email === firebaseUser.email);
+      
+      if (!existingUser) {
+        // Sign out the user since they're not registered in our system
+        await signOut(auth);
+        throw new Error('This Google account is not registered in our system. Please register first or contact an administrator.');
+      }
+      
+      console.log('✅ User found in system:', existingUser.username);
+      
+      // Update the existing user's profile with Google data if needed
+      const updateData: any = {
+        lastLogin: new Date().toISOString()
+      };
+      
+      // Handle Google profile picture using profile image manager
+      if (firebaseUser.photoURL) {
+        console.log('📸 Processing Google profile picture:', firebaseUser.photoURL);
+        try {
+          const profileImageUrl = await profileImageManager.updateFromGoogleIfNeeded(
+            existingUser.id,
+            firebaseUser.photoURL
+          );
+          if (profileImageUrl) {
+            updateData.profilePicture = profileImageUrl;
+          }
+        } catch (error) {
+          console.error('❌ Failed to process Google profile picture:', error);
+          // Continue without profile picture update
+        }
+      }
+      
+      // Update user document in Firestore
+      await updateDoc(doc(db, 'users', existingUser.id), updateData);
+      
+      // Get updated user data
+      const updatedUserDoc = await getDoc(doc(db, 'users', existingUser.id));
+      const userData = updatedUserDoc.data() as User;
+      
+      const token = await firebaseUser.getIdToken();
+      
+      console.log('🎉 Google Sign-In completed successfully!');
+      return { user: userData, token };
+      
+    } catch (error: any) {
+      console.error('❌ Google Sign-In error:', error);
+      
+      // Handle specific error cases
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled. Please try again.');
+      } else if (error.code === 'auth/popup-blocked') {
+        throw new Error('Pop-up was blocked by your browser. Please allow pop-ups and try again.');
+      } else if (error.message.includes('not registered in our system')) {
+        throw error; // Re-throw our custom error
+      } else {
+        throw new Error('Google Sign-In failed. Please try again.');
+      }
     }
   }
 
