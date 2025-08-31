@@ -3,6 +3,8 @@
  * Handles profile picture uploads to Cloudinary
  */
 
+import { cloudinaryConfig } from '../config/cloudinary';
+
 interface CloudinaryUploadResponse {
   public_id: string;
   secure_url: string;
@@ -14,8 +16,46 @@ interface CloudinaryUploadResponse {
 }
 
 class CloudinaryService {
-  private cloudName = 'campus-resources'; // Configure with your Cloudinary cloud name
-  private uploadPreset = 'profile_uploads'; // Configure with your upload preset
+  // Cloudinary configuration from config file
+  private cloudName = cloudinaryConfig.cloudName;
+  private uploadPreset = cloudinaryConfig.uploadPreset;
+
+  // Flag to check if service is properly configured
+  private isConfigured = false;
+
+  constructor() {
+    this.checkConfiguration();
+  }
+
+  /**
+   * Configure the Cloudinary service with your credentials
+   * @param cloudName - Your Cloudinary cloud name
+   * @param uploadPreset - Your upload preset name
+   */
+  configure(cloudName: string, uploadPreset: string) {
+    this.cloudName = cloudName;
+    this.uploadPreset = uploadPreset;
+    this.checkConfiguration();
+  }
+
+  /**
+   * Check if the service is properly configured
+   */
+  private checkConfiguration() {
+    this.isConfigured = !!(this.cloudName && this.uploadPreset &&
+                          this.cloudName !== 'demo' && this.uploadPreset !== 'unsigned_preset');
+  }
+
+  /**
+   * Get configuration status
+   */
+  getConfigurationStatus() {
+    return {
+      isConfigured: this.isConfigured,
+      cloudName: this.cloudName,
+      uploadPreset: this.uploadPreset
+    };
+  }
 
   /**
    * Upload an image file to Cloudinary
@@ -24,6 +64,26 @@ class CloudinaryService {
    * @returns Promise with the upload response
    */
   async uploadImage(file: File, userId: string): Promise<CloudinaryUploadResponse> {
+    // Check if service is properly configured
+    if (!this.isConfigured) {
+      console.warn('Cloudinary service not properly configured. Using demo mode.');
+
+      // Return a mock response for demo purposes
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            public_id: `demo_profile_${userId}_${Date.now()}`,
+            secure_url: `https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=${userId}`,
+            url: `https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=${userId}`,
+            format: 'jpg',
+            width: 300,
+            height: 300,
+            bytes: 1024
+          });
+        }, 2000); // Simulate upload delay
+      });
+    }
+
     return new Promise((resolve, reject) => {
       const formData = new FormData();
 
@@ -47,27 +107,43 @@ class CloudinaryService {
       xhr.open('POST', `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`, true);
 
       xhr.onload = () => {
+        console.log('Cloudinary upload response status:', xhr.status);
+        console.log('Cloudinary upload response:', xhr.responseText);
+
         if (xhr.status === 200) {
           try {
             const response: CloudinaryUploadResponse = JSON.parse(xhr.responseText);
+            console.log('Upload successful:', response);
             resolve(response);
           } catch (error) {
+            console.error('Failed to parse Cloudinary response:', error);
             reject(new Error('Invalid response from Cloudinary'));
           }
         } else {
           try {
             const errorResponse = JSON.parse(xhr.responseText);
-            reject(new Error(errorResponse.error?.message || 'Upload failed'));
+            console.error('Cloudinary upload error:', errorResponse);
+            reject(new Error(errorResponse.error?.message || `Upload failed: ${xhr.status}`));
           } catch (error) {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
+            console.error('Cloudinary upload failed with status:', xhr.status);
+            reject(new Error(`Upload failed with status ${xhr.status}. Please check your Cloudinary configuration.`));
           }
         }
       };
 
       xhr.onerror = () => {
-        reject(new Error('Network error during upload'));
+        console.error('Network error during Cloudinary upload');
+        reject(new Error('Network error during upload. Please check your internet connection.'));
       };
 
+      xhr.ontimeout = () => {
+        console.error('Cloudinary upload timeout');
+        reject(new Error('Upload timeout. Please try again.'));
+      };
+
+      xhr.timeout = 30000; // 30 second timeout
+
+      console.log('Starting Cloudinary upload to:', `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`);
       xhr.send(formData);
     });
   }

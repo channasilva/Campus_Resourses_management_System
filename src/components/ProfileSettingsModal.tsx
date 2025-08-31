@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, User, Mail, Building, FileText, Lock, Eye, EyeOff, Camera, Upload, Trash2 } from 'lucide-react';
+import { X, User, Mail, Building, FileText, Lock, Eye, EyeOff, Camera, Upload, Trash2, Settings } from 'lucide-react';
 import { firebaseService } from '../services/firebase-service';
 import { cloudinaryService } from '../services/cloudinary-service';
 import Button from './Button';
@@ -32,6 +32,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(currentUser?.profilePicture || null);
+  const [cloudinaryStatus, setCloudinaryStatus] = useState(cloudinaryService.getConfigurationStatus());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: string, value: string) => {
@@ -64,8 +65,13 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
     setIsUploadingImage(true);
     try {
+      console.log('Starting image upload for user:', currentUser.id);
+      console.log('Cloudinary status:', cloudinaryStatus);
+
       const result = await cloudinaryService.uploadImage(selectedImage, currentUser.id);
       const imageUrl = result.secure_url;
+
+      console.log('Upload successful, image URL:', imageUrl);
 
       // Update form data with new image URL
       setFormData(prev => ({ ...prev, profilePicture: imageUrl }));
@@ -73,10 +79,29 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       // Clear selected image
       setSelectedImage(null);
 
-      toast.success('Profile picture uploaded successfully!');
+      // Update preview
+      setImagePreview(imageUrl);
+
+      toast.success(cloudinaryStatus.isConfigured ?
+        'Profile picture uploaded successfully!' :
+        'Demo mode: Profile picture updated (using placeholder image)'
+      );
     } catch (error: any) {
       console.error('Image upload failed:', error);
-      toast.error(error.message || 'Failed to upload image');
+
+      let errorMessage = 'Failed to upload image';
+
+      if (error.message.includes('Network error')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Upload timeout. Please try again.';
+      } else if (error.message.includes('configuration')) {
+        errorMessage = 'Cloudinary is not properly configured. Please contact your administrator.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsUploadingImage(false);
     }
@@ -336,9 +361,81 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     Selected: {selectedImage.name} ({(selectedImage.size / 1024 / 1024).toFixed(2)} MB)
                   </div>
                 )}
+
+                {/* Configuration Status */}
+                <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      <span className="font-medium">Cloudinary Status: </span>
+                      <span className={cloudinaryStatus.isConfigured ? 'text-green-600' : 'text-yellow-600'}>
+                        {cloudinaryStatus.isConfigured ? 'Configured' : 'Demo Mode'}
+                      </span>
+                    </div>
+                    {!cloudinaryStatus.isConfigured && (
+                      <div className="text-xs text-gray-500">
+                        Using placeholder images
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Cloudinary Configuration Section (Admin Only) */}
+          {currentUser?.role?.toLowerCase() === 'admin' && (
+            <div className="space-y-4 pt-6 border-t">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                <Settings className="w-5 h-5 mr-2" />
+                Cloudinary Configuration
+              </h3>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                <p className="text-sm text-yellow-800 dark:text-yellow-400 mb-3">
+                  <strong>Configure Cloudinary for Image Uploads:</strong>
+                </p>
+
+                <div className="space-y-3">
+                  <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                    <p><strong>Cloud Name:</strong> Your Cloudinary cloud name (found in your Cloudinary dashboard)</p>
+                    <p><strong>Upload Preset:</strong> Create an unsigned upload preset in your Cloudinary settings</p>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      placeholder="Enter cloud name"
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      onChange={(e) => {
+                        const cloudName = e.target.value.trim();
+                        if (cloudName) {
+                          cloudinaryService.configure(cloudName, cloudinaryStatus.uploadPreset);
+                          setCloudinaryStatus(cloudinaryService.getConfigurationStatus());
+                        }
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter upload preset"
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      onChange={(e) => {
+                        const uploadPreset = e.target.value.trim();
+                        if (uploadPreset) {
+                          cloudinaryService.configure(cloudinaryStatus.cloudName, uploadPreset);
+                          setCloudinaryStatus(cloudinaryService.getConfigurationStatus());
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Current: Cloud Name: <strong>{cloudinaryStatus.cloudName}</strong> |
+                    Upload Preset: <strong>{cloudinaryStatus.uploadPreset}</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
                       {/* Password Change Section */}
            <div className="space-y-4 pt-6 border-t">
