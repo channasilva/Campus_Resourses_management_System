@@ -98,18 +98,34 @@ class ProfileImageManager {
   /**
    * Get profile image from localStorage
    */
-  getProfileImage(userId?: string): string | null {
+  getProfileImage(userId?: string | number): string | null {
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
-      if (!stored) return null;
-
-      const imageData: ProfileImageData = JSON.parse(stored);
-
-      // If userId is provided, check if it matches
-      if (userId && imageData.userId !== userId) {
+      if (!stored) {
+        console.log('No profile image found in localStorage');
         return null;
       }
 
+      const imageData: ProfileImageData = JSON.parse(stored);
+      console.log('Retrieved profile image data:', {
+        storedUserId: imageData.userId,
+        storedUserIdType: typeof imageData.userId,
+        requestedUserId: userId,
+        requestedUserIdType: typeof userId
+      });
+
+      // If userId is provided, check if it matches (handle both string and number)
+      if (userId !== undefined) {
+        const storedUserId = String(imageData.userId);
+        const requestedUserId = String(userId);
+
+        if (storedUserId !== requestedUserId) {
+          console.log('UserId mismatch - stored:', storedUserId, 'requested:', requestedUserId);
+          return null;
+        }
+      }
+
+      console.log('Profile image found and matches userId');
       return imageData.base64;
     } catch (error) {
       console.error('Failed to retrieve profile image:', error);
@@ -145,7 +161,7 @@ class ProfileImageManager {
   /**
    * Check if profile image exists
    */
-  hasProfileImage(userId?: string): boolean {
+  hasProfileImage(userId?: string | number): boolean {
     return this.getProfileImage(userId) !== null;
   }
 

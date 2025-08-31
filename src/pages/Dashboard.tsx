@@ -76,6 +76,11 @@ const Dashboard: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
+  // Debug effect to monitor profile image state changes
+  useEffect(() => {
+    console.log('Profile image state changed:', profileImage ? 'has image' : 'no image');
+  }, [profileImage]);
+
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
@@ -98,7 +103,9 @@ const Dashboard: React.FC = () => {
           await loadDashboardData(user.id, user.role);
 
           // Load profile image from localStorage
+          console.log('Loading profile image for user:', user.id, 'type:', typeof user.id);
           const savedImage = profileImageManager.getProfileImage(user.id);
+          console.log('Profile image loaded:', savedImage ? 'found' : 'not found');
           setProfileImage(savedImage);
         } else {
           console.log('❌ No user data found in localStorage');
@@ -351,16 +358,31 @@ const Dashboard: React.FC = () => {
 
   const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !currentUser) return;
+    if (!file || !currentUser) {
+      console.log('Upload cancelled - no file or no current user');
+      return;
+    }
 
     try {
-      console.log('Uploading profile image:', file.name, file.size, file.type);
+      console.log('Uploading profile image:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        userId: currentUser.id,
+        userIdType: typeof currentUser.id
+      });
 
       // Save image using profile image manager
       const imageUrl = await profileImageManager.saveProfileImage(file, currentUser.id);
+      console.log('Image saved successfully, URL length:', imageUrl.length);
 
       // Update state to display the image
       setProfileImage(imageUrl);
+      console.log('Profile image state updated');
+
+      // Verify the image was set by checking localStorage
+      const savedImage = profileImageManager.getProfileImage(currentUser.id);
+      console.log('Verification - image retrieved from storage:', savedImage ? 'success' : 'failed');
 
       toast.success('Profile image uploaded successfully!');
 
@@ -478,6 +500,10 @@ const Dashboard: React.FC = () => {
                       className="w-12 h-12 rounded-2xl object-cover shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 border-white dark:border-secondary-800 cursor-pointer"
                       onClick={() => document.getElementById('profile-image-input')?.click()}
                       title="Click to change profile image"
+                      onError={(e) => {
+                        console.error('Profile image failed to load');
+                        setProfileImage(null);
+                      }}
                     />
                   ) : (
                     <div
@@ -551,6 +577,10 @@ const Dashboard: React.FC = () => {
                         className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white dark:border-secondary-800 cursor-pointer"
                         onClick={() => document.getElementById('profile-image-input-mobile')?.click()}
                         title="Click to change profile image"
+                        onError={(e) => {
+                          console.error('Mobile profile image failed to load');
+                          setProfileImage(null);
+                        }}
                       />
                     ) : (
                       <div
