@@ -19,11 +19,12 @@ interface BaseInputProps {
   fullWidth?: boolean;
 }
 
-interface InputProps extends BaseInputProps, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+interface InputProps extends BaseInputProps, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'> {
   type?: 'text' | 'email' | 'password' | 'number' | 'date' | 'time' | 'search' | 'tel' | 'url';
+  onChange?: (value: string) => void;
 }
 
-interface SelectProps extends BaseInputProps {
+interface SelectProps extends BaseInputProps, Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size' | 'onChange'> {
   type: 'select';
   options: { value: string; label: string; disabled?: boolean }[];
   placeholder?: string;
@@ -31,10 +32,11 @@ interface SelectProps extends BaseInputProps {
   onChange?: (value: string) => void;
 }
 
-interface TextAreaProps extends BaseInputProps, Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'size'> {
+interface TextAreaProps extends BaseInputProps, Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'size' | 'onChange'> {
   type: 'textarea';
   rows?: number;
   resize?: boolean;
+  onChange?: (value: string) => void;
 }
 
 type CombinedInputProps = InputProps | SelectProps | TextAreaProps;
@@ -57,6 +59,7 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
       floating = false,
       fullWidth = true,
       type = 'text',
+      onChange,
       ...restProps
     } = props;
 
@@ -271,7 +274,7 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
             disabled={disabled}
             className={inputClasses}
             value={selectProps.value || ''}
-            onChange={(e) => selectProps.onChange?.(e.target.value)}
+            onChange={(e) => onChange?.(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             aria-describedby={cn(error && errorId, helperText && helperId)}
@@ -309,6 +312,7 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
               'min-h-[100px]'
             )}
             rows={textareaProps.rows || 4}
+            onChange={(e) => onChange?.(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             aria-describedby={cn(error && errorId, helperText && helperId)}
@@ -327,6 +331,7 @@ const Input = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElem
           type={type === 'password' && showPassword ? 'text' : type}
           disabled={disabled}
           className={inputClasses}
+          onChange={(e) => onChange?.(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           aria-describedby={cn(error && errorId, helperText && helperId)}
