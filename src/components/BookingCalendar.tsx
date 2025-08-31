@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, Users } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Clock, Users, MapPin } from 'lucide-react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { firebaseService } from '../services/firebase-service';
 import { Booking } from '../types';
 import { toLocalDateString, formatLocalTime } from '../utils/date-utils';
-import 'react-calendar/dist/Calendar.css';
 
 interface BookingCalendarProps {
   isOpen: boolean;
@@ -26,6 +25,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [dayBookings, setDayBookings] = useState<DayBookings>({});
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'calendar' | 'details'>('calendar');
 
   useEffect(() => {
     if (isOpen) {
@@ -69,19 +69,33 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     }
   };
 
-  const handleDateClick = (date: Date) => {
-    console.log('📅 Date clicked:', date);
-    console.log('📅 Date string:', date.toISOString().split('T')[0]);
-    console.log('📅 Available dates with bookings:', Object.keys(dayBookings));
-    console.log('📅 Bookings for selected date:', dayBookings[date.toISOString().split('T')[0]] || []);
-    
-    setSelectedDate(date);
+  const handleDateClick = (date: Date | Date[]) => {
+    // Handle both single date and date array cases
+    const selectedDate = Array.isArray(date) ? date[0] : date;
+
+    if (selectedDate) {
+      // Create a date key that matches how bookings are grouped
+      const dateKey = toLocalDateString(selectedDate.toISOString());
+
+      console.log('📅 Date clicked:', selectedDate);
+      console.log('📅 Date key:', dateKey);
+      console.log('📅 Available dates with bookings:', Object.keys(dayBookings));
+      console.log('📅 Bookings for selected date:', dayBookings[dateKey] || []);
+
+      setSelectedDate(selectedDate);
+      setViewMode('details');
+    }
+  };
+
+  const handleBackToCalendar = () => {
+    setViewMode('calendar');
+    setSelectedDate(null);
   };
 
   const getTileContent = ({ date }: { date: Date }) => {
-    const dateKey = date.toISOString().split('T')[0];
+    const dateKey = toLocalDateString(date.toISOString());
     const bookingsForDay = dayBookings[dateKey] || [];
-    
+
     if (bookingsForDay.length === 0) {
       return null;
     }
@@ -96,9 +110,9 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   };
 
   const getTileClassName = ({ date }: { date: Date }) => {
-    const dateKey = date.toISOString().split('T')[0];
+    const dateKey = toLocalDateString(date.toISOString());
     const bookingsForDay = dayBookings[dateKey] || [];
-    
+
     if (bookingsForDay.length === 0) {
       return '';
     }
@@ -111,7 +125,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     if (hasApproved) return 'react-calendar__tile--has-approved';
     if (hasPending) return 'react-calendar__tile--has-pending';
     if (hasRejected) return 'react-calendar__tile--has-rejected';
-    
+
     return 'react-calendar__tile--has-bookings';
   };
 
@@ -134,15 +148,15 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
   const getSelectedDateBookings = () => {
     if (!selectedDate) return [];
-    
-    const dateKey = selectedDate.toISOString().split('T')[0];
+
+    const dateKey = toLocalDateString(selectedDate.toISOString());
     const bookings = dayBookings[dateKey] || [];
-    
+
     console.log('🔍 Getting bookings for date:', dateKey);
     console.log('🔍 Available dates:', Object.keys(dayBookings));
     console.log('🔍 Found bookings:', bookings.length);
     console.log('🔍 Bookings:', bookings);
-    
+
     return bookings;
   };
 
@@ -169,7 +183,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
               <span className="ml-2 text-gray-600 dark:text-gray-400">Loading bookings...</span>
             </div>
-          ) : (
+          ) : viewMode === 'calendar' ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Calendar */}
               <div>
@@ -183,7 +197,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                     className="w-full"
                   />
                 </div>
-                
+
                 {/* Legend */}
                 <div className="mt-4 space-y-2 text-sm">
                   <div className="flex items-center space-x-2">
@@ -201,66 +215,119 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 </div>
               </div>
 
-              {/* Selected Date Bookings */}
+              {/* Instructions */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                  {selectedDate ? (
-                    `Bookings for ${selectedDate.toLocaleDateString()}`
-                  ) : (
-                    'Select a date to view bookings'
-                  )}
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">How to Use</h3>
+                <div className="space-y-4 text-gray-600 dark:text-gray-400">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">1</span>
+                    </div>
+                    <p>Click on any date in the calendar that shows a number (indicating bookings)</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">2</span>
+                    </div>
+                    <p>View all booking details for that specific date</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">3</span>
+                    </div>
+                    <p>Use the back button to return to calendar view</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Selected Date Bookings Details View */
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Bookings for {selectedDate?.toLocaleDateString()}
                 </h3>
+                <button
+                  onClick={handleBackToCalendar}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200"
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  <span>Back to Calendar</span>
+                </button>
+              </div>
 
-                {selectedDate && (
-                  <div className="space-y-3">
-                    {getSelectedDateBookings().length > 0 ? (
-                      getSelectedDateBookings()
-                        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                        .map((booking) => (
-                          <div key={booking.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-semibold text-gray-900 dark:text-gray-100">{booking.resourceName}</h4>
-                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(booking.status)}`}>
-                                {booking.status}
-                              </span>
+              <div className="space-y-4">
+                {getSelectedDateBookings().length > 0 ? (
+                  getSelectedDateBookings()
+                    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                    .map((booking) => (
+                      <div key={booking.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{booking.resourceName}</h4>
+                          <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(booking.status)}`}>
+                            {booking.status}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-3">
+                              <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Time</p>
+                              </div>
                             </div>
 
-                            <div className="space-y-2 text-sm">
-                              <div className="flex items-center space-x-2">
-                                <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                <span className="text-gray-900 dark:text-gray-100">
-                                  {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
-                                </span>
-                              </div>
-                              
-                              <div className="flex items-center space-x-2">
-                                <Users className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                <span className="text-gray-900 dark:text-gray-100">{booking.attendees} people</span>
-                              </div>
-                              
-                              <div className="flex items-center space-x-2">
-                                <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                <span className="text-gray-900 dark:text-gray-100">{booking.purpose}</span>
-                              </div>
-
-                              {/* Show user information for all users */}
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                Booked by: {booking.userName} ({booking.userRole})
+                            <div className="flex items-center space-x-3">
+                              <Users className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{booking.attendees} people</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Attendees</p>
                               </div>
                             </div>
                           </div>
-                        ))
-                    ) : (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No bookings for this date
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {!selectedDate && (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    Click on a date in the calendar to view bookings
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-3">
+                              <MapPin className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{booking.purpose}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Purpose</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center space-x-3">
+                              <CalendarIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{booking.userName}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Booked by ({booking.userRole})</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Additional booking information */}
+                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Booking ID:</span> {booking.id}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="text-center py-12">
+                    <CalendarIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Bookings Found</h4>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6">There are no bookings for this date.</p>
+                    <button
+                      onClick={handleBackToCalendar}
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+                    >
+                      Back to Calendar
+                    </button>
                   </div>
                 )}
               </div>
