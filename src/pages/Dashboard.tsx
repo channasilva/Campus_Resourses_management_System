@@ -560,13 +560,13 @@ const Dashboard: React.FC = () => {
                   <div className="text-sm text-secondary-500 dark:text-secondary-400">Resources</div>
                 </div>
                 <div className="text-center lg:text-right">
-                  <div className="text-2xl lg:text-3xl font-bold text-success-600 dark:text-success-400">
+                  <div className="text-2xl lg:text-3xl font-bold text-primary-600 dark:text-primary-400">
                     {bookings.length}
                   </div>
                   <div className="text-sm text-secondary-500 dark:text-secondary-400">Bookings</div>
                 </div>
                 <div className="text-center lg:text-right">
-                  <div className="text-2xl lg:text-3xl font-bold text-warning-600 dark:text-warning-400">
+                  <div className="text-2xl lg:text-3xl font-bold text-primary-600 dark:text-primary-400">
                     {notifications.length}
                   </div>
                   <div className="text-sm text-secondary-500 dark:text-secondary-400">Notifications</div>
@@ -723,21 +723,21 @@ const Dashboard: React.FC = () => {
                       key: 'bookings',
                       label: 'View Bookings',
                       icon: <Calendar className="w-6 h-6" />,
-                      color: 'success',
+                      color: 'primary',
                       description: 'Manage reservations'
                     },
                     {
                       key: 'notifications',
                       label: 'Notifications',
                       icon: <Bell className="w-6 h-6" />,
-                      color: 'warning',
+                      color: 'primary',
                       description: 'Check messages'
                     },
                     {
                       action: handleOpenCalendar,
                       label: 'Calendar',
                       icon: <CalendarDays className="w-6 h-6" />,
-                      color: 'info',
+                      color: 'primary',
                       description: 'View schedule'
                     }
                   ].map((action, index) => (
