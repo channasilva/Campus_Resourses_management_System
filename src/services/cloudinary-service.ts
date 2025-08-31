@@ -90,13 +90,14 @@ class CloudinaryService {
       formData.append('public_id', publicId);
       console.log('Public ID added:', publicId);
 
-      // Add transformation for profile pictures (square crop, 300x300)
-      const transformation = JSON.stringify([
-        { width: 300, height: 300, crop: 'fill', gravity: 'face' },
-        { quality: 'auto' }
-      ]);
-      formData.append('transformation', transformation);
-      console.log('Transformation added:', transformation);
+      // Add transformation parameters for profile pictures (square crop, 300x300)
+      // Cloudinary expects transformation parameters as individual form fields
+      formData.append('width', '300');
+      formData.append('height', '300');
+      formData.append('crop', 'fill');
+      formData.append('gravity', 'face');
+      formData.append('quality', 'auto');
+      console.log('Transformation parameters added: width=300, height=300, crop=fill, gravity=face, quality=auto');
 
       const xhr = new XMLHttpRequest();
       const uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
@@ -247,6 +248,14 @@ class CloudinaryService {
       formData.append('file', testImageBlob);
       formData.append('upload_preset', this.uploadPreset);
       formData.append('public_id', `test_${Date.now()}`);
+
+      // Add transformation parameters for test image
+      formData.append('width', '300');
+      formData.append('height', '300');
+      formData.append('crop', 'fill');
+      formData.append('gravity', 'face');
+      formData.append('quality', 'auto');
+      console.log('Test transformation parameters added: width=300, height=300, crop=fill, gravity=face, quality=auto');
 
       const xhr = new XMLHttpRequest();
       const uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
