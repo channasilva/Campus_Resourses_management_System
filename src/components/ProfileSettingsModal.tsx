@@ -4,6 +4,7 @@ import { firebaseService } from '../services/firebase-service';
 import { cloudinaryService } from '../services/cloudinary-service';
 import Button from './Button';
 import Input from './Input';
+import ProfileImageUpload from './ProfileImageUpload';
 import toast from 'react-hot-toast';
 
 interface ProfileSettingsModalProps {
@@ -333,114 +334,37 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               Profile Picture
             </h3>
 
-            <div className="flex items-center space-x-6">
-              {/* Profile Picture Preview */}
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-600">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Profile preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                      <User className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
-                </div>
+            <div className="flex items-center justify-center">
+              <ProfileImageUpload
+                size="xl"
+                showUploadButton={true}
+                showRemoveButton={true}
+                onImageUploaded={(imageUrl) => {
+                  console.log('Profile image uploaded in modal:', imageUrl);
+                  setFormData(prev => ({ ...prev, profilePicture: imageUrl }));
+                  setImagePreview(imageUrl);
+                  toast.success('Profile image uploaded successfully! 🎉');
+                }}
+                onImageRemoved={() => {
+                  console.log('Profile image removed in modal');
+                  setFormData(prev => ({ ...prev, profilePicture: '' }));
+                  setImagePreview(null);
+                  toast.success('Profile image removed successfully');
+                }}
+              />
+            </div>
 
-                {/* Remove button */}
-                {imagePreview && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveImage}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                    title="Remove image"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-
-              {/* Upload Controls */}
-              <div className="flex-1 space-y-3">
-                <div className="flex items-center space-x-3">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingImage}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Choose Image
-                  </Button>
-
-                  {selectedImage && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleImageUpload}
-                      loading={isUploadingImage}
-                    >
-                      Upload
-                    </Button>
-                  )}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleTestConnection}
-                    loading={isTestingConnection}
-                    className="ml-2"
-                  >
-                    Test Connection
-                  </Button>
-                </div>
-
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  <p>Supported formats: JPEG, PNG, GIF, WebP</p>
-                  <p>Maximum file size: 5MB</p>
-                  <p>Recommended: Square images for best results</p>
-                </div>
-
-                {selectedImage && (
-                  <div className="text-sm text-blue-600 dark:text-blue-400">
-                    Selected: {selectedImage.name} ({(selectedImage.size / 1024 / 1024).toFixed(2)} MB)
-                  </div>
-                )}
-
-                {/* Upload Progress */}
-                {isUploadingImage && (
-                  <div className="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                        {uploadStatus}
-                      </div>
-                      <div className="text-sm text-blue-600 dark:text-blue-400">
-                        {Math.round(uploadProgress)}%
-                      </div>
-                    </div>
-                    <div className="w-full bg-blue-200 dark:bg-blue-700 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-
-              </div>
+            {/* Test Connection Button */}
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleTestConnection}
+                loading={isTestingConnection}
+              >
+                Test Cloudinary Connection
+              </Button>
             </div>
           </div>
 

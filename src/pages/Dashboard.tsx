@@ -39,7 +39,8 @@ import { User as UserType } from '../types/auth';
 import { formatLocalDateTime, formatLocalTime } from '../utils/date-utils';
 import toast, { Toaster } from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
-import { profileImageManager } from '../utils/profileImageManager';
+import { profileImageUploader } from '../utils/profileImageUploader';
+import ProfileImageUpload from '../components/ProfileImageUpload';
 
 import AddResourceModal from '../components/AddResourceModal';
 import EditResourceModal from '../components/EditResourceModal';
@@ -76,11 +77,6 @@ const Dashboard: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  // Debug effect to monitor profile image state changes
-  useEffect(() => {
-    console.log('Profile image state changed:', profileImage ? 'has image' : 'no image');
-  }, [profileImage]);
-
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
@@ -102,18 +98,11 @@ const Dashboard: React.FC = () => {
           setCurrentUser(user);
           await loadDashboardData(user.id, user.role);
 
-          // Load profile image from Firebase
-          console.log('Loading profile image for user:', user.id, 'type:', typeof user.id);
+          // Load profile image from the uploader system
           try {
-            const savedImage = await profileImageManager.getProfileImage(user.id);
-            console.log('Profile image loaded:', savedImage ? 'found' : 'not found', 'URL:', savedImage);
+            const savedImage = await profileImageUploader.getCurrentProfileImage();
+            console.log('Profile image loaded:', savedImage ? 'found' : 'not found');
             setProfileImage(savedImage);
-
-            // Also update the user object with the profile picture if found
-            if (savedImage) {
-              user.profilePicture = savedImage;
-              setCurrentUser(user);
-            }
           } catch (error) {
             console.error('Error loading profile image:', error);
             setProfileImage(null);
@@ -367,50 +356,29 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !currentUser) {
-      console.log('Upload cancelled - no file or no current user');
-      return;
-    }
-
-    try {
-      console.log('Uploading profile image:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        userId: currentUser.id,
-        userIdType: typeof currentUser.id
+  const handleProfileImageUploaded = (imageUrl: string) => {
+    console.log('Profile image uploaded successfully:', imageUrl);
+    setProfileImage(imageUrl);
+    
+    // Update current user state
+    if (currentUser) {
+      setCurrentUser({
+        ...currentUser,
+        profilePicture: imageUrl
       });
+    }
+  };
 
-      // Save image using profile image manager
-      const imageUrl = await profileImageManager.saveProfileImage(file, currentUser.id);
-      console.log('Image saved successfully, URL:', imageUrl);
-
-      // Update state to display the image immediately
-      setProfileImage(imageUrl);
-      console.log('Profile image state updated to:', imageUrl);
-
-      // Force a re-render by updating the currentUser state if needed
-      if (currentUser) {
-        setCurrentUser({
-          ...currentUser,
-          profilePicture: imageUrl
-        });
-      }
-
-      // Verify the image was saved by fetching from Firebase
-      const savedImage = await profileImageManager.getProfileImage(currentUser.id);
-      console.log('Verification - image retrieved from Firebase:', savedImage ? 'success' : 'failed');
-
-      toast.success('Profile image uploaded successfully!');
-
-      // Clear the input value to allow re-uploading the same file
-      event.target.value = '';
-
-    } catch (error) {
-      console.error('Profile image upload failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload profile image');
+  const handleProfileImageRemoved = () => {
+    console.log('Profile image removed');
+    setProfileImage(null);
+    
+    // Update current user state
+    if (currentUser) {
+      setCurrentUser({
+        ...currentUser,
+        profilePicture: null
+      });
     }
   };
 
@@ -511,44 +479,14 @@ const Dashboard: React.FC = () => {
               
               {/* User Profile Section with Image Upload */}
               <div className="flex items-center space-x-4 p-3 rounded-2xl bg-white/50 dark:bg-secondary-800/50 backdrop-blur-sm border border-secondary-200/50 dark:border-secondary-700/50 hover:bg-white/70 dark:hover:bg-secondary-800/70 transition-all duration-300 animate-fade-in-up">
-                <div className="relative group">
-                  {profileImage ? (
-                    <img
-                      src={profileImage}
-                      alt={`${currentUser?.username}'s profile`}
-                      className="w-12 h-12 rounded-2xl object-cover shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 border-white dark:border-secondary-800 cursor-pointer"
-                      onClick={() => document.getElementById('profile-image-input')?.click()}
-                      title="Click to change profile image"
-                      onError={(e) => {
-                        console.error('Profile image failed to load');
-                        setProfileImage(null);
-                      }}
-                    />
-                  ) : (
-                    <div
-                      className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
-                      onClick={() => document.getElementById('profile-image-input')?.click()}
-                      title="Click to upload profile image"
-                    >
-                      <User className="w-6 h-6 text-white" />
-                    </div>
-                  )}
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-secondary-800 animate-pulse" />
-                  {/* Upload overlay */}
-                  <div className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="text-white text-xs font-medium">
-                      {profileImage ? 'Change' : 'Upload'}
-                    </div>
-                  </div>
-                  {/* Hidden file input */}
-                  <input
-                    id="profile-image-input"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleProfileImageUpload}
-                  />
-                </div>
+                <ProfileImageUpload
+                  size="md"
+                  showUploadButton={false}
+                  showRemoveButton={true}
+                  onImageUploaded={handleProfileImageUploaded}
+                  onImageRemoved={handleProfileImageRemoved}
+                  className="relative"
+                />
                 <div className="text-sm">
                   <p className="font-semibold text-secondary-900 dark:text-secondary-100">{currentUser?.username}</p>
                   <p className="text-secondary-500 dark:text-secondary-400 capitalize flex items-center gap-1">
@@ -588,44 +526,14 @@ const Dashboard: React.FC = () => {
               {/* User Profile Card with Image Upload */}
               <div className="card-interactive p-4 animate-scale-in">
                 <div className="flex items-center space-x-4">
-                  <div className="relative group">
-                    {profileImage ? (
-                      <img
-                        src={profileImage}
-                        alt={`${currentUser?.username}'s profile`}
-                        className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white dark:border-secondary-800 cursor-pointer"
-                        onClick={() => document.getElementById('profile-image-input-mobile')?.click()}
-                        title="Click to change profile image"
-                        onError={(e) => {
-                          console.error('Mobile profile image failed to load');
-                          setProfileImage(null);
-                        }}
-                      />
-                    ) : (
-                      <div
-                        className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg cursor-pointer"
-                        onClick={() => document.getElementById('profile-image-input-mobile')?.click()}
-                        title="Click to upload profile image"
-                      >
-                        <User className="w-6 h-6 text-white" />
-                      </div>
-                    )}
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-secondary-800 animate-pulse" />
-                    {/* Upload overlay */}
-                    <div className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div className="text-white text-xs font-medium">
-                        {profileImage ? 'Change' : 'Upload'}
-                      </div>
-                    </div>
-                    {/* Hidden file input for mobile */}
-                    <input
-                      id="profile-image-input-mobile"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleProfileImageUpload}
-                    />
-                  </div>
+                  <ProfileImageUpload
+                    size="md"
+                    showUploadButton={false}
+                    showRemoveButton={true}
+                    onImageUploaded={handleProfileImageUploaded}
+                    onImageRemoved={handleProfileImageRemoved}
+                    className="relative"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-secondary-900 dark:text-secondary-100 text-base">{currentUser?.username}</p>
                     <p className="text-secondary-500 dark:text-secondary-400 text-sm capitalize flex items-center gap-1">
