@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   LineChart,
   Line,
@@ -14,8 +14,9 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { Calendar, Download, RefreshCw } from 'lucide-react';
+import { Calendar, Download, RefreshCw, FileText, Image, Package } from 'lucide-react';
 import { Booking, Resource } from '../types';
+import { exportToPDF, exportToPNG, exportBoth, prepareElementForExport, cleanupAfterExport } from '../utils/exportUtils';
 
 interface AdvancedAnalyticsProps {
   bookings: Booking[];
@@ -37,6 +38,8 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
     end: new Date().toISOString().split('T')[0] // today
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const analyticsRef = useRef<HTMLDivElement>(null);
 
   // Filter bookings by date range
   const filteredBookings = bookings.filter(booking => {
@@ -49,6 +52,70 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
     setIsRefreshing(true);
     // Simulate refresh delay
     setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  // Export handlers
+  const handleExportPDF = async () => {
+    if (!analyticsRef.current || isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      prepareElementForExport(analyticsRef.current);
+      await exportToPDF(analyticsRef.current, {
+        filename: `analysis_report_${new Date().toISOString().split('T')[0]}.pdf`,
+        quality: 0.95,
+        scale: 2
+      });
+    } catch (error) {
+      console.error('PDF export failed:', error);
+    } finally {
+      if (analyticsRef.current) {
+        cleanupAfterExport(analyticsRef.current);
+      }
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPNG = async () => {
+    if (!analyticsRef.current || isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      prepareElementForExport(analyticsRef.current);
+      await exportToPNG(analyticsRef.current, {
+        filename: `analysis_report_${new Date().toISOString().split('T')[0]}.png`,
+        quality: 0.95,
+        scale: 2
+      });
+    } catch (error) {
+      console.error('PNG export failed:', error);
+    } finally {
+      if (analyticsRef.current) {
+        cleanupAfterExport(analyticsRef.current);
+      }
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportBoth = async () => {
+    if (!analyticsRef.current || isExporting) return;
+    
+    setIsExporting(true);
+    try {
+      prepareElementForExport(analyticsRef.current);
+      await exportBoth(analyticsRef.current, {
+        filename: `analysis_report_${new Date().toISOString().split('T')[0]}`,
+        quality: 0.95,
+        scale: 2
+      });
+    } catch (error) {
+      console.error('Batch export failed:', error);
+    } finally {
+      if (analyticsRef.current) {
+        cleanupAfterExport(analyticsRef.current);
+      }
+      setIsExporting(false);
+    }
   };
 
   // Process booking trends over time (last 30 days)
@@ -219,13 +286,51 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Advanced Analytics</h2>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Last updated: {new Date().toLocaleString()}
+      {/* Header with Export Controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Advanced Analytics</h2>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Last updated: {new Date().toLocaleString()}
+          </div>
+        </div>
+        
+        {/* Export Controls */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg transition-colors text-sm font-medium"
+            title="Export as PDF"
+          >
+            <FileText className="w-4 h-4" />
+            {isExporting ? 'Exporting...' : 'Export PDF'}
+          </button>
+          
+          <button
+            onClick={handleExportPNG}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg transition-colors text-sm font-medium"
+            title="Export as PNG"
+          >
+            <Image className="w-4 h-4" />
+            {isExporting ? 'Exporting...' : 'Export PNG'}
+          </button>
+          
+          <button
+            onClick={handleExportBoth}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg transition-colors text-sm font-medium"
+            title="Export both PDF and PNG"
+          >
+            <Package className="w-4 h-4" />
+            {isExporting ? 'Exporting...' : 'Export Both'}
+          </button>
         </div>
       </div>
+
+      {/* Analytics Content Container */}
+      <div ref={analyticsRef} className="space-y-8 bg-white dark:bg-gray-900 p-6 rounded-lg">
 
       {/* Controls */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
@@ -299,20 +404,6 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
               Booking Trends (Last 30 Days)
             </h3>
-            <button
-              onClick={() => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 800;
-                canvas.height = 400;
-                // Simple export - in a real app you'd use a proper charting library export
-                alert('Export functionality would save chart as PNG here');
-              }}
-              className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </button>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={bookingTrends}>
@@ -338,13 +429,6 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
               Top 10 Resource Utilization
             </h3>
-            <button
-              onClick={() => alert('Export functionality would save chart as PNG here')}
-              className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </button>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={resourceUtilization}>
@@ -427,13 +511,6 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
               User Registration Trends
             </h3>
-            <button
-              onClick={() => alert('Export functionality would save chart as PNG here')}
-              className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </button>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={userRegistrationTrends}>
@@ -580,6 +657,7 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
             <p className="text-sm text-gray-500 dark:text-gray-400">Most Active User</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
