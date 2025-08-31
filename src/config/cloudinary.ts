@@ -4,21 +4,15 @@
  */
 
 export const cloudinaryConfig = {
-  // Replace these with your actual Cloudinary credentials
-  cloudName: 'demo', // Your Cloudinary cloud name
-  uploadPreset: 'unsigned_preset', // Your unsigned upload preset
+  // Real Cloudinary credentials - configured for production use
+  cloudName: 'dpb1x1r9b', // Your actual Cloudinary cloud name
+  uploadPreset: 'ICBTUploads', // Your actual unsigned upload preset
 
   // API Key (for reference - not used in client-side uploads)
   apiKey: '249537147872617', // The API key provided by user
 
-  // Instructions for setup:
-  // 1. Go to https://cloudinary.com/console
-  // 2. Sign in to your account
-  // 3. Copy your Cloud Name from the dashboard
-  // 4. Go to Settings > Upload
-  // 5. Create an unsigned upload preset
-  // 6. Update the values above
-  // 7. The system will automatically detect the configuration
+  // Configuration is now active - ready for real image uploads
+  // The system will automatically detect this configuration and use real Cloudinary uploads
 };
 
 export default cloudinaryConfig;

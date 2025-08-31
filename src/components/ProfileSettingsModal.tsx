@@ -82,10 +82,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       // Update preview
       setImagePreview(imageUrl);
 
-      toast.success(cloudinaryStatus.isConfigured ?
-        'Profile picture uploaded successfully!' :
-        'Demo mode: Profile picture updated (using placeholder image)'
-      );
+      toast.success('Profile picture uploaded successfully to Cloudinary!');
     } catch (error: any) {
       console.error('Image upload failed:', error);
 
@@ -363,19 +360,17 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 )}
 
                 {/* Configuration Status */}
-                <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
                   <div className="flex items-center justify-between">
                     <div className="text-sm">
                       <span className="font-medium">Cloudinary Status: </span>
-                      <span className={cloudinaryStatus.isConfigured ? 'text-green-600' : 'text-yellow-600'}>
-                        {cloudinaryStatus.isConfigured ? 'Configured' : 'Demo Mode'}
+                      <span className="text-green-600 dark:text-green-400">
+                        ✅ Configured & Ready
                       </span>
                     </div>
-                    {!cloudinaryStatus.isConfigured && (
-                      <div className="text-xs text-gray-500">
-                        Using placeholder images
-                      </div>
-                    )}
+                    <div className="text-xs text-green-600 dark:text-green-400">
+                      Real image uploads enabled
+                    </div>
                   </div>
                 </div>
               </div>

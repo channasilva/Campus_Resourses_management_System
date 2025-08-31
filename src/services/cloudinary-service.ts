@@ -66,22 +66,7 @@ class CloudinaryService {
   async uploadImage(file: File, userId: string): Promise<CloudinaryUploadResponse> {
     // Check if service is properly configured
     if (!this.isConfigured) {
-      console.warn('Cloudinary service not properly configured. Using demo mode.');
-
-      // Return a mock response for demo purposes
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            public_id: `demo_profile_${userId}_${Date.now()}`,
-            secure_url: `https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=${userId}`,
-            url: `https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=${userId}`,
-            format: 'jpg',
-            width: 300,
-            height: 300,
-            bytes: 1024
-          });
-        }, 2000); // Simulate upload delay
-      });
+      throw new Error('Cloudinary service is not properly configured. Please contact your administrator to set up the credentials.');
     }
 
     return new Promise((resolve, reject) => {
