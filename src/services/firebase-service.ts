@@ -211,16 +211,30 @@ class FirebaseService {
       
     } catch (error: any) {
       console.error('❌ Google Sign-In error:', error);
+      console.error('❌ Error code:', error.code);
+      console.error('❌ Error message:', error.message);
       
       // Handle specific error cases
       if (error.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled. Please try again.');
       } else if (error.code === 'auth/popup-blocked') {
         throw new Error('Pop-up was blocked by your browser. Please allow pop-ups and try again.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        throw new Error('This domain is not authorized for Google Sign-In. Please contact the administrator.');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        throw new Error('Google Sign-In is not enabled. Please contact the administrator.');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        throw new Error('Another sign-in popup is already open. Please close it and try again.');
       } else if (error.message.includes('not registered in our system')) {
         throw error; // Re-throw our custom error
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your internet connection and try again.');
       } else {
-        throw new Error('Google Sign-In failed. Please try again.');
+        // Provide more detailed error for debugging
+        const errorMsg = error.code ?
+          `Google Sign-In failed (${error.code}). Please try again or contact support.` :
+          'Google Sign-In failed. Please try again.';
+        throw new Error(errorMsg);
       }
     }
   }
