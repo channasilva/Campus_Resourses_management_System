@@ -96,7 +96,7 @@ const LoginPage: React.FC = () => {
               label="Email Address"
               type="email"
               value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
+              onChange={(value) => handleInputChange('email', value)}
               error={errors.email}
               placeholder="Enter your email"
               required
@@ -106,7 +106,7 @@ const LoginPage: React.FC = () => {
               label="Password"
               type="password"
               value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
+              onChange={(value) => handleInputChange('password', value)}
               error={errors.password}
               placeholder="Enter your password"
               required

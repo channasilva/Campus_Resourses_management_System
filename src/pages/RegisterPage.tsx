@@ -164,7 +164,7 @@ const RegisterPage: React.FC = () => {
             label="Username"
             type="text"
             value={formData.username}
-            onChange={(e) => handleInputChange('username', e.target.value)}
+            onChange={(value) => handleInputChange('username', value)}
             error={errors.username}
             placeholder="Enter your username"
             required
@@ -174,7 +174,7 @@ const RegisterPage: React.FC = () => {
             label="Email Address"
             type="email"
             value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
+            onChange={(value) => handleInputChange('email', value)}
             error={errors.email}
             placeholder="Enter your email"
             required
@@ -209,7 +209,7 @@ const RegisterPage: React.FC = () => {
             label="Password"
             type="password"
             value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
+            onChange={(value) => handleInputChange('password', value)}
             error={errors.password}
             placeholder="Create a strong password"
             required
@@ -219,7 +219,7 @@ const RegisterPage: React.FC = () => {
             label="Confirm Password"
             type="password"
             value={formData.confirmPassword}
-            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+            onChange={(value) => handleInputChange('confirmPassword', value)}
             error={errors.confirmPassword}
             placeholder="Confirm your password"
             required
