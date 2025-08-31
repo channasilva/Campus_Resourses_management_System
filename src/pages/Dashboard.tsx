@@ -441,9 +441,17 @@ const Dashboard: React.FC = () => {
               {/* User Profile Section */}
               <div className="flex items-center space-x-4 p-3 rounded-2xl bg-white/50 dark:bg-secondary-800/50 backdrop-blur-sm border border-secondary-200/50 dark:border-secondary-700/50 hover:bg-white/70 dark:hover:bg-secondary-800/70 transition-all duration-300 animate-fade-in-up">
                 <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
+                  {currentUser?.profilePicture ? (
+                    <img
+                      src={currentUser.profilePicture}
+                      alt={`${currentUser.username}'s profile`}
+                      className="w-12 h-12 rounded-2xl object-cover shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 border-white dark:border-secondary-800"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                  )}
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-secondary-800 animate-pulse" />
                 </div>
                 <div className="text-sm">
@@ -486,9 +494,17 @@ const Dashboard: React.FC = () => {
               <div className="card-interactive p-4 animate-scale-in">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
-                      <User className="w-6 h-6 text-white" />
-                    </div>
+                    {currentUser?.profilePicture ? (
+                      <img
+                        src={currentUser.profilePicture}
+                        alt={`${currentUser.username}'s profile`}
+                        className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white dark:border-secondary-800"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
+                        <User className="w-6 h-6 text-white" />
+                      </div>
+                    )}
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white dark:border-secondary-800 animate-pulse" />
                   </div>
                   <div className="flex-1 min-w-0">

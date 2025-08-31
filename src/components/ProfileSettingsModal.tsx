@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { X, User, Mail, Building, FileText, Lock, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, User, Mail, Building, FileText, Lock, Eye, EyeOff, Camera, Upload, Trash2 } from 'lucide-react';
 import { firebaseService } from '../services/firebase-service';
+import { cloudinaryService } from '../services/cloudinary-service';
 import Button from './Button';
 import Input from './Input';
 import toast from 'react-hot-toast';
@@ -22,17 +23,69 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     username: currentUser?.username || '',
     email: currentUser?.email || '',
     department: currentUser?.department || '',
-    bio: currentUser?.bio || ''
+    bio: currentUser?.bio || '',
+    profilePicture: currentUser?.profilePicture || ''
   });
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(currentUser?.profilePicture || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const validation = cloudinaryService.validateImageFile(file);
+      if (!validation.isValid) {
+        toast.error(validation.error);
+        return;
+      }
+
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedImage || !currentUser) return;
+
+    setIsUploadingImage(true);
+    try {
+      const result = await cloudinaryService.uploadImage(selectedImage, currentUser.id);
+      const imageUrl = result.secure_url;
+
+      // Update form data with new image URL
+      setFormData(prev => ({ ...prev, profilePicture: imageUrl }));
+
+      // Clear selected image
+      setSelectedImage(null);
+
+      toast.success('Profile picture uploaded successfully!');
+    } catch (error: any) {
+      console.error('Image upload failed:', error);
+      toast.error(error.message || 'Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(currentUser?.profilePicture || null);
+    setFormData(prev => ({ ...prev, profilePicture: currentUser?.profilePicture || '' }));
   };
 
   const validateForm = (): boolean => {
@@ -87,13 +140,8 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
       // Note: Password changes are not supported in this version
       // Users should use the "Forgot Password" feature instead
-      if (formData.newPassword) {
-        toast.error('Password changes are not supported in profile settings. Please use the "Forgot Password" feature on the login page.');
-        setIsLoading(false);
-        return;
-      }
 
-      console.log('🔄 Updating user profile:', { ...updateData, password: formData.newPassword ? '[HIDDEN]' : 'unchanged' });
+      console.log('🔄 Updating user profile:', updateData);
       
       await firebaseService.updateUserProfile(currentUser.id, updateData);
       
@@ -145,7 +193,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               label="Username"
               type="text"
               value={formData.username}
-              onChange={(value) => handleInputChange('username', value)}
+              onChange={(e) => handleInputChange('username', e.target.value)}
               error={errors.username}
               placeholder="Enter your username"
               required
@@ -155,7 +203,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               label="Email Address"
               type="email"
               value={formData.email}
-              onChange={(value) => handleInputChange('email', value)}
+              onChange={(e) => handleInputChange('email', e.target.value)}
               error={errors.email}
               placeholder="Enter your email address"
               required
@@ -206,7 +254,93 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             </div>
           </div>
 
-                     {/* Password Change Section */}
+          {/* Profile Picture Section */}
+          <div className="space-y-4 pt-6 border-t">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+              <Camera className="w-5 h-5 mr-2" />
+              Profile Picture
+            </h3>
+
+            <div className="flex items-center space-x-6">
+              {/* Profile Picture Preview */}
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-600">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Profile preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <User className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Remove button */}
+                {imagePreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    title="Remove image"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+
+              {/* Upload Controls */}
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choose Image
+                  </Button>
+
+                  {selectedImage && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleImageUpload}
+                      loading={isUploadingImage}
+                    >
+                      Upload
+                    </Button>
+                  )}
+                </div>
+
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <p>Supported formats: JPEG, PNG, GIF, WebP</p>
+                  <p>Maximum file size: 5MB</p>
+                  <p>Recommended: Square images for best results</p>
+                </div>
+
+                {selectedImage && (
+                  <div className="text-sm text-blue-600 dark:text-blue-400">
+                    Selected: {selectedImage.name} ({(selectedImage.size / 1024 / 1024).toFixed(2)} MB)
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+                      {/* Password Change Section */}
            <div className="space-y-4 pt-6 border-t">
              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
                <Lock className="w-5 h-5 mr-2" />
