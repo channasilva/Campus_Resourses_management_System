@@ -482,7 +482,7 @@ const Dashboard: React.FC = () => {
                 <ProfileImageUpload
                   size="md"
                   showUploadButton={false}
-                  showRemoveButton={true}
+                  showRemoveButton={false}
                   onImageUploaded={handleProfileImageUploaded}
                   onImageRemoved={handleProfileImageRemoved}
                   className="relative"
