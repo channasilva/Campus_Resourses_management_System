@@ -225,37 +225,39 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       </div>
 
       {/* Upload and Remove Buttons */}
-      <div className="flex gap-2 mt-2">
-        {showUploadButton && (
-          <button
-            onClick={handleClick}
-            disabled={isUploading}
-            className={`
-              flex-1 ${config.button} bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400
-              text-white rounded-lg font-medium transition-colors duration-200
-              flex items-center justify-center gap-2
-            `}
-          >
-            <Upload className="w-4 h-4" />
-            {isUploading ? 'Uploading...' : currentImageUrl ? 'Change' : 'Upload'}
-          </button>
-        )}
-        
-        {currentImageUrl && showRemoveButton && !isUploading && (
-          <button
-            onClick={handleRemoveImage}
-            className={`
-              ${config.button} bg-red-600 hover:bg-red-700 text-white rounded-lg
-              font-medium transition-colors duration-200 flex items-center justify-center gap-2
-              ${showUploadButton ? 'px-3' : 'flex-1'}
-            `}
-            title="Remove profile image"
-          >
-            <X className="w-4 h-4" />
-            {!showUploadButton && 'Remove'}
-          </button>
-        )}
-      </div>
+      {(showUploadButton || (currentImageUrl && showRemoveButton && !isUploading)) && (
+        <div className="flex gap-2 mt-2">
+          {showUploadButton && (
+            <button
+              onClick={handleClick}
+              disabled={isUploading}
+              className={`
+                flex-1 ${config.button} bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400
+                text-white rounded-lg font-medium transition-colors duration-200
+                flex items-center justify-center gap-2
+              `}
+            >
+              <Upload className="w-4 h-4" />
+              {isUploading ? 'Uploading...' : currentImageUrl ? 'Change' : 'Upload'}
+            </button>
+          )}
+          
+          {currentImageUrl && showRemoveButton && !isUploading && (
+            <button
+              onClick={handleRemoveImage}
+              className={`
+                ${config.button} bg-red-600 hover:bg-red-700 text-white rounded-lg
+                font-medium transition-colors duration-200 flex items-center justify-center gap-2
+                ${showUploadButton ? 'px-3' : 'flex-1'}
+              `}
+              title="Remove profile image"
+            >
+              <X className="w-4 h-4" />
+              {!showUploadButton && 'Remove'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* File Input */}
       <input
