@@ -237,10 +237,10 @@ const Dashboard: React.FC = () => {
   };
 
   const handleBookingCreated = async () => {
-    // Refresh bookings list
+    // Refresh bookings list and resources for real-time updates
     if (currentUser) {
       try {
-        console.log('🔄 Refreshing bookings for user:', currentUser.id);
+        console.log('🔄 Refreshing bookings and resources for user:', currentUser.id);
         
         // Load bookings based on user role
         let updatedBookings: Booking[] = [];
@@ -252,10 +252,21 @@ const Dashboard: React.FC = () => {
           updatedBookings = await firebaseService.getBookingsByUser(currentUser.id);
         }
         
+        // Also refresh resources to update availability status
+        const updatedResources = await firebaseService.getResources();
+        
         console.log('📋 Updated bookings:', updatedBookings);
+        console.log('🏢 Updated resources:', updatedResources.length);
+        
         setBookings(updatedBookings);
+        setResources(updatedResources);
+        
+        // Show success message with real-time update info
+        toast.success('Booking created! Resource availability updated in real-time.', {
+          duration: 4000
+        });
       } catch (error) {
-        console.error('Error refreshing bookings:', error);
+        console.error('Error refreshing bookings and resources:', error);
       }
     }
   };
@@ -998,25 +1009,39 @@ const Dashboard: React.FC = () => {
                       return matchesSearch && matchesStatus;
                     })
                     .map((resource) => (
-                    <div 
-                      key={resource.id} 
-                      className={`card p-4 sm:p-6 transition-all duration-300 ${
-                        resource.isUnderMaintenance ? 'opacity-60 grayscale' : ''
+                    <div
+                      key={resource.id}
+                      className={`card p-4 sm:p-6 transition-all duration-500 hover:shadow-lg hover:scale-[1.02] ${
+                        resource.isUnderMaintenance ? 'opacity-60 grayscale' : 'hover:shadow-primary-500/10'
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg">{resource.name}</h4>
+                        <div className="flex items-center gap-3">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg">{resource.name}</h4>
+                          {/* Real-time availability indicator */}
+                          <div className={`w-3 h-3 rounded-full animate-pulse ${
+                            resource.isUnderMaintenance ? 'bg-orange-500' :
+                            resource.status === 'available' ? 'bg-green-500' :
+                            'bg-red-500'
+                          }`} title={
+                            resource.isUnderMaintenance ? 'Under Maintenance' :
+                            resource.status === 'available' ? 'Available Now' :
+                            'Currently Booked'
+                          } />
+                        </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            resource.status === 'available' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                            resource.status === 'booked' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                          }`}>
-                            {resource.status}
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-300 ${
+                            resource.status === 'available' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 shadow-green-500/20' :
+                            resource.status === 'booked' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 shadow-red-500/20' :
+                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 shadow-yellow-500/20'
+                          } shadow-sm`}>
+                            {resource.status === 'available' ? '✅ Available' :
+                             resource.status === 'booked' ? '🔒 Booked' :
+                             '⚠️ ' + resource.status}
                           </span>
                           {resource.isUnderMaintenance && (
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">
-                              Maintenance
+                            <span className="px-3 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300 shadow-sm shadow-orange-500/20 animate-pulse">
+                              🔧 Maintenance
                             </span>
                           )}
                         </div>
@@ -1067,32 +1092,60 @@ const Dashboard: React.FC = () => {
                           />
                         )}
 
-                        {/* Mobile-Optimized Action Buttons */}
+                        {/* Enhanced Action Buttons with Smooth Transitions */}
                         <div className="flex flex-col space-y-3">
-                          <Button 
-                            className="w-full mobile-button" 
+                          <Button
+                            className={`w-full mobile-button transition-all duration-300 transform hover:scale-105 ${
+                              resource.isUnderMaintenance
+                                ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                                : resource.status === 'available'
+                                  ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-green-500/25'
+                                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-blue-500/25'
+                            }`}
                             size="sm"
-                            onClick={() => handleBookResource(resource)}
+                            onClick={() => {
+                              if (resource.isUnderMaintenance) {
+                                toast.error('This resource is currently under maintenance and cannot be booked.', {
+                                  duration: 4000
+                                });
+                                return;
+                              }
+                              handleBookResource(resource);
+                            }}
                             disabled={resource.isUnderMaintenance}
                           >
-                            {resource.isUnderMaintenance ? 'Unavailable' : 'Book Now'}
+                            {resource.isUnderMaintenance ? (
+                              <>
+                                <AlertCircle className="w-4 h-4 mr-2" />
+                                Unavailable
+                              </>
+                            ) : (
+                              <>
+                                <Calendar className="w-4 h-4 mr-2" />
+                                {resource.status === 'available' ? 'Book Now' : 'Check Availability'}
+                              </>
+                            )}
                           </Button>
                           {currentUser.role?.toLowerCase() === 'admin' && (
                             <div className="grid grid-cols-2 gap-3">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleEditResource(resource)}
-                                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mobile-button"
+                                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mobile-button transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-blue-500/20"
                               >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
-                                onClick={() => handleDeleteResource(resource.id)}
-                                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 mobile-button"
+                                onClick={() => {
+                                  if (window.confirm(`Are you sure you want to delete "${resource.name}"? This action cannot be undone.`)) {
+                                    handleDeleteResource(resource.id);
+                                  }
+                                }}
+                                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 mobile-button transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-red-500/20"
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Delete
@@ -1358,6 +1411,61 @@ const Dashboard: React.FC = () => {
             </div>
           )}
         </section>
+
+        {/* Profile Picture Display Section - Under Dashboard */}
+        {profileImage && (
+          <section className="card-glass rounded-3xl overflow-hidden animate-fade-in-up mt-8" style={{ animationDelay: '0.3s' }}>
+            <div className="padding-responsive">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-2xl font-bold gradient-text mb-2">Your Profile</h3>
+                  <p className="text-secondary-600 dark:text-secondary-400">Your current profile picture</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-2xl">
+                <div className="relative group">
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-xl group-hover:scale-105 transition-transform duration-300">
+                    <img
+                      src={profileImage}
+                      alt={`${currentUser.username}'s profile`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.username)}&size=128&background=3b82f6&color=ffffff`;
+                      }}
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-primary-600/20 dark:bg-primary-400/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                
+                <div className="flex-1 text-center sm:text-left">
+                  <h4 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
+                    {currentUser.username}
+                  </h4>
+                  <p className="text-secondary-600 dark:text-secondary-400 mb-1 capitalize">
+                    {currentUser.role} • {currentUser.department || 'No Department'}
+                  </p>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-400">
+                    Member since {new Date(currentUser.createdAt).toLocaleDateString()}
+                  </p>
+                  
+                  <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                    <Button
+                      onClick={handleOpenProfileSettings}
+                      variant="outline"
+                      size="sm"
+                      className="hover-lift"
+                      leftIcon={<User className="w-4 h-4" />}
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Mobile Floating Action Button */}

@@ -736,6 +736,9 @@ class FirebaseService {
       
       console.log('🔍 Found', bookings.length, 'existing bookings for this resource');
       
+      // Get the date of the new booking for same-day filtering
+      const newBookingDate = new Date(startTime).toDateString();
+      
       const conflicts = bookings.filter(booking => {
         if (excludeBookingId && booking.id === excludeBookingId) return false;
         
@@ -744,10 +747,16 @@ class FirebaseService {
         const newStart = new Date(startTime);
         const newEnd = new Date(endTime);
         
+        // Only check conflicts for the same day
+        const bookingDate = bookingStart.toDateString();
+        if (bookingDate !== newBookingDate) {
+          return false; // Skip bookings from different days
+        }
+        
         const hasConflict = (bookingStart < newEnd && bookingEnd > newStart);
         
         if (hasConflict) {
-          console.log('⚠️ Conflict found with booking:', booking.id);
+          console.log('⚠️ Same-day conflict found with booking:', booking.id);
           console.log('⚠️ Existing booking time:', bookingStart, 'to', bookingEnd);
           console.log('⚠️ New booking time:', newStart, 'to', newEnd);
         }
@@ -755,11 +764,41 @@ class FirebaseService {
         return hasConflict;
       });
       
-      console.log('🔍 Total conflicts found:', conflicts.length);
+      console.log('🔍 Same-day conflicts found:', conflicts.length);
       return conflicts;
     } catch (error: any) {
       console.error('Check booking conflicts error:', error);
       throw new Error(error.message);
+    }
+  }
+
+  // Get bookings for a specific resource on a specific date
+  async getResourceBookingsForDate(resourceId: string, date: string): Promise<Booking[]> {
+    try {
+      console.log('🔍 Getting bookings for resource:', resourceId, 'on date:', date);
+      
+      // Create start and end of day timestamps
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      let q = query(
+        collection(db, 'bookings'),
+        where('resourceId', '==', resourceId),
+        where('status', 'in', ['pending', 'approved']),
+        where('startTime', '>=', startOfDay.toISOString()),
+        where('startTime', '<=', endOfDay.toISOString())
+      );
+
+      const querySnapshot = await getDocs(q);
+      const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
+      
+      console.log('📋 Found', bookings.length, 'bookings for this resource on', date);
+      return bookings;
+    } catch (error: any) {
+      console.error('Get resource bookings for date error:', error);
+      return [];
     }
   }
 

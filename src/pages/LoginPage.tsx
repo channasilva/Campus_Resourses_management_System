@@ -15,6 +15,26 @@ const LoginPage: React.FC = () => {
   });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+
+  // Check if user has a profile image for background
+  useEffect(() => {
+    const checkUserProfileImage = async () => {
+      try {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          if (user.profilePicture) {
+            setBackgroundImage(user.profilePicture);
+          }
+        }
+      } catch (error) {
+        console.log('No previous user data found');
+      }
+    };
+    
+    checkUserProfileImage();
+  }, []);
 
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
@@ -100,9 +120,24 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
+    <div
+      className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900 relative overflow-hidden"
+      style={{
+        backgroundImage: backgroundImage
+          ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${backgroundImage})`
+          : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Subtle overlay pattern */}
+      {backgroundImage && (
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 via-transparent to-secondary-900/20 pointer-events-none" />
+      )}
+      
       <Toaster position="top-center" />
-      <div className="max-w-md w-full space-y-6 sm:space-y-8">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8 relative z-10">
         {/* Header - Mobile optimized */}
         <div className="text-center">
           <div className="mx-auto h-12 w-12 sm:h-14 sm:w-14 bg-primary-600 rounded-xl flex items-center justify-center">

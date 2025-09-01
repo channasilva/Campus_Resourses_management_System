@@ -60,9 +60,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
 
-    // Check for conflicts when date or time changes
+    // Check for conflicts when date or time changes (with debounce)
     if (['startDate', 'startTime', 'endTime'].includes(field)) {
-      checkForConflicts();
+      // Clear existing conflicts immediately when user changes input
+      setConflicts([]);
+      // Debounce the conflict check to avoid too many API calls
+      setTimeout(() => {
+        checkForConflicts();
+      }, 500);
     }
   };
 
@@ -141,6 +146,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
     
     if (!validateForm() || !resource) return;
 
+    // Don't allow submission if there are conflicts
+    if (conflicts.length > 0) {
+      toast.error('Please resolve the time conflict before booking.', {
+        duration: 4000
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -148,42 +161,20 @@ const BookingModal: React.FC<BookingModalProps> = ({
       const startDateTime = createLocalDateTime(formData.startDate, formData.startTime);
       const endDateTime = createLocalDateTime(formData.startDate, formData.endTime);
 
-      // Check for booking conflicts before creating the booking
-      console.log('🔍 Checking for booking conflicts...');
-      const conflicts = await firebaseService.checkBookingConflicts(
+      // Final conflict check (in case of race conditions)
+      console.log('🔍 Final conflict check before booking...');
+      const finalConflicts = await firebaseService.checkBookingConflicts(
         resource.id,
         toLocalISOString(startDateTime),
         toLocalISOString(endDateTime)
       );
       
-      if (conflicts.length > 0) {
-        console.log('⚠️ Booking conflicts found:', conflicts);
-        
-        // Create detailed conflict message
-        const conflictDetails = conflicts.map(conflict => {
-          const start = new Date(conflict.startTime).toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          });
-          const end = new Date(conflict.endTime).toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          });
-          const status = conflict.status === 'approved' ? '✅ Approved' : '⏳ Pending';
-          return `${start} - ${end} (${status})`;
-        }).join('\n');
-        
-        const message = `⚠️ This resource is already booked for the selected time:\n\n${conflictDetails}\n\nPlease choose a different time or date.`;
-        
-        toast.error(message, {
-          duration: 8000,
-          style: {
-            maxWidth: '500px',
-            whiteSpace: 'pre-line',
-            fontSize: '14px'
-          }
+      if (finalConflicts.length > 0) {
+        console.log('⚠️ Last-minute conflicts detected');
+        setConflicts(finalConflicts);
+        toast.error('A conflict was detected. Please choose a different time.', {
+          duration: 4000
         });
-        
         setIsLoading(false);
         return;
       }
@@ -209,7 +200,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
       await firebaseService.createBooking(bookingData);
       
-      toast.success('Booking created successfully!');
+      toast.success('Booking created successfully!', {
+        duration: 4000
+      });
       onBookingCreated();
       onClose();
       
@@ -224,7 +217,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
       });
     } catch (error: any) {
       console.error('Booking creation failed:', error);
-      toast.error(error.message || 'Failed to create booking');
+      toast.error(error.message || 'Failed to create booking', {
+        duration: 4000
+      });
     } finally {
       setIsLoading(false);
     }
