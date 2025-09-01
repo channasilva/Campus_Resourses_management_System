@@ -76,6 +76,8 @@ const Dashboard: React.FC = () => {
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'booked' | 'maintenance'>('all');
 
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -224,8 +226,14 @@ const Dashboard: React.FC = () => {
   };
 
   const handleBookResource = (resource: Resource) => {
-    setSelectedResource(resource);
-    setIsBookingModalOpen(true);
+    console.log('🎯 Booking resource:', resource.name, 'ID:', resource.id);
+    // Clear any previous resource state first
+    setSelectedResource(null);
+    // Set the new resource after a brief delay to ensure state is cleared
+    setTimeout(() => {
+      setSelectedResource(resource);
+      setIsBookingModalOpen(true);
+    }, 10);
   };
 
   const handleBookingCreated = async () => {
@@ -921,20 +929,50 @@ const Dashboard: React.FC = () => {
                   <input
                     type="text"
                     placeholder="Search resources..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all duration-200 text-base"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button className="px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200 ${
+                      statusFilter === 'all'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-700'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
                     All
                   </button>
-                  <button className="px-3 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <button
+                    onClick={() => setStatusFilter('available')}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200 ${
+                      statusFilter === 'available'
+                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
                     Available
                   </button>
-                  <button className="px-3 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <button
+                    onClick={() => setStatusFilter('booked')}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200 ${
+                      statusFilter === 'booked'
+                        ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
                     Booked
                   </button>
-                  <button className="px-3 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <button
+                    onClick={() => setStatusFilter('maintenance')}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200 ${
+                      statusFilter === 'maintenance'
+                        ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-700'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
                     Maintenance
                   </button>
                 </div>
@@ -942,7 +980,24 @@ const Dashboard: React.FC = () => {
 
               {resources.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {resources.map((resource) => (
+                  {resources
+                    .filter((resource) => {
+                      // Search filter
+                      const matchesSearch = searchTerm === '' ||
+                        resource.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        resource.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        resource.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (resource.description && resource.description.toLowerCase().includes(searchTerm.toLowerCase()));
+                      
+                      // Status filter
+                      const matchesStatus = statusFilter === 'all' ||
+                        (statusFilter === 'available' && resource.status === 'available' && !resource.isUnderMaintenance) ||
+                        (statusFilter === 'booked' && resource.status === 'booked') ||
+                        (statusFilter === 'maintenance' && (resource.status === 'maintenance' || resource.isUnderMaintenance));
+                      
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map((resource) => (
                     <div 
                       key={resource.id} 
                       className={`card p-4 sm:p-6 transition-all duration-300 ${
@@ -1050,7 +1105,32 @@ const Dashboard: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">No resources available.</p>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-secondary-100 dark:bg-secondary-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-secondary-400" />
+                  </div>
+                  <h5 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
+                    {searchTerm || statusFilter !== 'all' ? 'No matching resources found' : 'No resources available'}
+                  </h5>
+                  <p className="text-secondary-500 dark:text-secondary-400 mb-6">
+                    {searchTerm || statusFilter !== 'all'
+                      ? 'Try adjusting your search or filter criteria'
+                      : 'Resources will appear here once they are added'
+                    }
+                  </p>
+                  {(searchTerm || statusFilter !== 'all') && (
+                    <Button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setStatusFilter('all');
+                      }}
+                      variant="outline"
+                      className="hover-scale"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           )}

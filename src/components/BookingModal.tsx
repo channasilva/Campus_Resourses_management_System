@@ -35,13 +35,23 @@ const BookingModal: React.FC<BookingModalProps> = ({
   const [conflicts, setConflicts] = useState<Booking[]>([]);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
 
-  // Clear conflicts when modal opens
+  // Clear conflicts when modal opens or resource changes
   useEffect(() => {
     if (isOpen) {
       setConflicts([]);
       setCheckingConflicts(false);
+      // Reset form when resource changes
+      setFormData({
+        startDate: '',
+        startTime: '',
+        endTime: '',
+        purpose: '',
+        attendees: '1',
+        notes: ''
+      });
+      setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, resource?.id]);
 
   const handleInputChange = (field: string, value: string) => {
     console.log(`Input change: ${field} = "${value}"`);
