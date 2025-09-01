@@ -261,10 +261,7 @@ const Dashboard: React.FC = () => {
         setBookings(updatedBookings);
         setResources(updatedResources);
         
-        // Show success message with real-time update info
-        toast.success('Booking created! Resource availability updated in real-time.', {
-          duration: 4000
-        });
+        // No duplicate success message - BookingModal already shows one
       } catch (error) {
         console.error('Error refreshing bookings and resources:', error);
       }
@@ -1411,61 +1408,6 @@ const Dashboard: React.FC = () => {
             </div>
           )}
         </section>
-
-        {/* Profile Picture Display Section - Under Dashboard */}
-        {profileImage && (
-          <section className="card-glass rounded-3xl overflow-hidden animate-fade-in-up mt-8" style={{ animationDelay: '0.3s' }}>
-            <div className="padding-responsive">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-2xl font-bold gradient-text mb-2">Your Profile</h3>
-                  <p className="text-secondary-600 dark:text-secondary-400">Your current profile picture</p>
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-2xl">
-                <div className="relative group">
-                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-xl group-hover:scale-105 transition-transform duration-300">
-                    <img
-                      src={profileImage}
-                      alt={`${currentUser.username}'s profile`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.username)}&size=128&background=3b82f6&color=ffffff`;
-                      }}
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-primary-600/20 dark:bg-primary-400/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                
-                <div className="flex-1 text-center sm:text-left">
-                  <h4 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
-                    {currentUser.username}
-                  </h4>
-                  <p className="text-secondary-600 dark:text-secondary-400 mb-1 capitalize">
-                    {currentUser.role} • {currentUser.department || 'No Department'}
-                  </p>
-                  <p className="text-sm text-secondary-500 dark:text-secondary-400">
-                    Member since {new Date(currentUser.createdAt).toLocaleDateString()}
-                  </p>
-                  
-                  <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                    <Button
-                      onClick={handleOpenProfileSettings}
-                      variant="outline"
-                      size="sm"
-                      className="hover-lift"
-                      leftIcon={<User className="w-4 h-4" />}
-                    >
-                      Edit Profile
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
       </main>
 
       {/* Mobile Floating Action Button */}

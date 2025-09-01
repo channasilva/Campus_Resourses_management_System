@@ -15,32 +15,6 @@ const LoginPage: React.FC = () => {
   });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
-  const [showProfileBackground, setShowProfileBackground] = useState(false);
-
-  // Check if user has a profile image for background
-  useEffect(() => {
-    const checkUserProfileImage = async () => {
-      try {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-          const user = JSON.parse(userData);
-          console.log('🔍 Checking user profile picture:', user.profilePicture);
-          if (user.profilePicture) {
-            setBackgroundImage(user.profilePicture);
-            setShowProfileBackground(true);
-            console.log('✅ Profile background set:', user.profilePicture);
-          }
-        } else {
-          console.log('ℹ️ No user data found in localStorage');
-        }
-      } catch (error) {
-        console.log('❌ Error loading user data:', error);
-      }
-    };
-    
-    checkUserProfileImage();
-  }, []);
 
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
@@ -126,84 +100,24 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div
-      className={`min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-all duration-1000 ${
-        showProfileBackground
-          ? 'bg-gray-900'
-          : 'bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900'
-      }`}
-      style={{
-        backgroundImage: showProfileBackground && backgroundImage
-          ? `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url(${backgroundImage})`
-          : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      {/* Enhanced overlay patterns */}
-      {showProfileBackground && backgroundImage ? (
-        <>
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-900/30 via-transparent to-secondary-900/30 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-          {/* Profile picture indicator */}
-          <div className="absolute top-4 right-4 z-20">
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2 text-white text-xs">
-              <div className="w-6 h-6 rounded-full overflow-hidden border border-white/30">
-                <img
-                  src={backgroundImage}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span>Welcome back!</span>
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* Default decorative pattern */}
-          <div className="absolute inset-0 opacity-10 dark:opacity-5">
-            <div className="absolute top-10 left-10 w-32 h-32 bg-primary-500 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-accent-purple-500 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-          </div>
-        </>
-      )}
-      
+    <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
       <Toaster position="top-center" />
-      <div className="max-w-md w-full space-y-6 sm:space-y-8 relative z-10">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8">
         {/* Header - Mobile optimized */}
         <div className="text-center">
-          <div className={`mx-auto h-12 w-12 sm:h-14 sm:w-14 rounded-xl flex items-center justify-center transition-all duration-500 ${
-            showProfileBackground
-              ? 'bg-white/20 backdrop-blur-sm border border-white/30'
-              : 'bg-primary-600'
-          }`}>
+          <div className="mx-auto h-12 w-12 sm:h-14 sm:w-14 bg-primary-600 rounded-xl flex items-center justify-center">
             <GraduationCap className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
           </div>
-          <h2 className={`mt-4 sm:mt-6 text-2xl sm:text-3xl font-bold leading-tight transition-all duration-500 ${
-            showProfileBackground
-              ? 'text-white drop-shadow-lg'
-              : 'text-gray-900 dark:text-gray-100'
-          }`}>
+          <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
             Welcome back
           </h2>
-          <p className={`mt-2 text-sm sm:text-base transition-all duration-500 ${
-            showProfileBackground
-              ? 'text-gray-200 drop-shadow-md'
-              : 'text-gray-600 dark:text-gray-400'
-          }`}>
+          <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Sign in to your Campus Resources account
           </p>
         </div>
 
         {/* Login Form - Mobile optimized */}
-        <div className={`rounded-lg sm:rounded-xl shadow-xl p-6 sm:p-8 animate-fade-in transition-all duration-500 ${
-          showProfileBackground
-            ? 'bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-white/20 dark:border-gray-700/50'
-            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        }`}>
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-8 animate-fade-in">
           <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
             <Input
               label="Email Address"
