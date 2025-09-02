@@ -161,66 +161,14 @@
 
             async getResources() {
                 try {
-                    console.log('🔍 Fetching resources...');
+                    console.log('🔍 Fetching resources from Firestore...');
                     
                     const resourcesRef = collection(db, 'resources');
                     const snapshot = await getDocs(resourcesRef);
                     
                     if (snapshot.empty) {
-                        console.log('📊 No resources found, returning sample data...');
-                        return [
-                            {
-                                id: 'sample-1',
-                                name: 'Computer Lab A',
-                                type: 'lab',
-                                description: 'Fully equipped computer lab with 25 workstations',
-                                category: 'Laboratory',
-                                location: 'Building A, Room 101',
-                                capacity: 25,
-                                status: 'available',
-                                isUnderMaintenance: false,
-                                maintenanceNote: '',
-                                features: ['Computers', 'Projector', 'Whiteboard'],
-                                equipment: ['Computers', 'Projector', 'Whiteboard'],
-                                maintenanceSchedule: 'Monthly',
-                                createdAt: new Date().toISOString(),
-                                updatedAt: new Date().toISOString()
-                            },
-                            {
-                                id: 'sample-2',
-                                name: 'Conference Room B',
-                                type: 'room',
-                                description: 'Professional conference room with presentation equipment',
-                                category: 'Meeting Room',
-                                location: 'Building B, Room 205',
-                                capacity: 15,
-                                status: 'available',
-                                isUnderMaintenance: false,
-                                maintenanceNote: '',
-                                features: ['Projector', 'Video Conference System', 'Whiteboard'],
-                                equipment: ['Projector', 'Video Conference System', 'Whiteboard'],
-                                maintenanceSchedule: 'Quarterly',
-                                createdAt: new Date().toISOString(),
-                                updatedAt: new Date().toISOString()
-                            },
-                            {
-                                id: 'sample-3',
-                                name: 'Science Lab',
-                                type: 'lab',
-                                description: 'Advanced science laboratory with modern equipment',
-                                category: 'Laboratory',
-                                location: 'Building C, Room 301',
-                                capacity: 20,
-                                status: 'available',
-                                isUnderMaintenance: false,
-                                maintenanceNote: '',
-                                features: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
-                                equipment: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
-                                maintenanceSchedule: 'Weekly',
-                                createdAt: new Date().toISOString(),
-                                updatedAt: new Date().toISOString()
-                            }
-                        ];
+                        console.log('📊 No resources found in Firestore');
+                        return [];
                     }
                     
                     const resources = snapshot.docs.map(doc => ({
@@ -228,10 +176,11 @@
                         ...doc.data()
                     }));
                     
-                    console.log(`✅ Successfully fetched ${resources.length} resources`);
+                    console.log(`✅ Successfully fetched ${resources.length} resources from Firestore`);
+                    console.log('📋 Resources found:', resources.map(r => `${r.name} (${r.type})`));
                     return resources;
                 } catch (error) {
-                    console.error('Error getting resources:', error);
+                    console.error('❌ Error getting resources:', error);
                     return [];
                 }
             },

@@ -426,67 +426,14 @@ class FirebaseService {
 
   async getResources(): Promise<Resource[]> {
     try {
-      console.log('🔍 Fetching resources...');
+      console.log('🔍 Fetching resources from Firestore...');
       
       const resourcesRef = collection(db, 'resources');
       const snapshot = await getDocs(resourcesRef);
       
       if (snapshot.empty) {
-        console.log('📊 No resources found, returning sample data...');
-        // Return sample data without trying to create it in Firestore
-        return [
-          {
-            id: 'sample-1',
-            name: 'Computer Lab A',
-            type: 'lab' as const,
-            description: 'Fully equipped computer lab with 25 workstations',
-            category: 'Laboratory',
-            location: 'Building A, Room 101',
-            capacity: 25,
-            status: 'available' as const,
-            isUnderMaintenance: false,
-            maintenanceNote: '',
-            features: ['Computers', 'Projector', 'Whiteboard'],
-            equipment: ['Computers', 'Projector', 'Whiteboard'],
-            maintenanceSchedule: 'Monthly',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: 'sample-2',
-            name: 'Conference Room B',
-            type: 'room' as const,
-            description: 'Professional conference room with presentation equipment',
-            category: 'Meeting Room',
-            location: 'Building B, Room 205',
-            capacity: 15,
-            status: 'available' as const,
-            isUnderMaintenance: false,
-            maintenanceNote: '',
-            features: ['Projector', 'Video Conference System', 'Whiteboard'],
-            equipment: ['Projector', 'Video Conference System', 'Whiteboard'],
-            maintenanceSchedule: 'Quarterly',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: 'sample-3',
-            name: 'Science Lab',
-            type: 'lab' as const,
-            description: 'Advanced science laboratory with modern equipment',
-            category: 'Laboratory',
-            location: 'Building C, Room 301',
-            capacity: 20,
-            status: 'available' as const,
-            isUnderMaintenance: false,
-            maintenanceNote: '',
-            features: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
-            equipment: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
-            maintenanceSchedule: 'Weekly',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ];
+        console.log('📊 No resources found in Firestore');
+        return [];
       }
       
       const resources = snapshot.docs.map(doc => ({
@@ -494,10 +441,11 @@ class FirebaseService {
         ...doc.data()
       })) as Resource[];
       
-      console.log(`✅ Successfully fetched ${resources.length} resources`);
+      console.log(`✅ Successfully fetched ${resources.length} resources from Firestore`);
+      console.log('📋 Resources found:', resources.map(r => `${r.name} (${r.type})`));
       return resources;
     } catch (error) {
-      console.error('Error getting resources:', error);
+      console.error('❌ Error getting resources:', error);
       return [];
     }
   }

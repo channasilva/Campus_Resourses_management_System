@@ -302,69 +302,9 @@
                 
                 if (snapshot.empty) {
                     result += '📊 No resources found in Firestore\n';
-                    result += 'Returning sample data as fallback...\n\n';
+                    result += 'This means the resources collection is empty\n\n';
                     
-                    const sampleResources = [
-                        {
-                            id: 'sample-1',
-                            name: 'Computer Lab A',
-                            type: 'lab',
-                            description: 'Fully equipped computer lab with 25 workstations',
-                            category: 'Laboratory',
-                            location: 'Building A, Room 101',
-                            capacity: 25,
-                            status: 'available',
-                            isUnderMaintenance: false,
-                            maintenanceNote: '',
-                            features: ['Computers', 'Projector', 'Whiteboard'],
-                            equipment: ['Computers', 'Projector', 'Whiteboard'],
-                            maintenanceSchedule: 'Monthly',
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString()
-                        },
-                        {
-                            id: 'sample-2',
-                            name: 'Conference Room B',
-                            type: 'room',
-                            description: 'Professional conference room with presentation equipment',
-                            category: 'Meeting Room',
-                            location: 'Building B, Room 205',
-                            capacity: 15,
-                            status: 'available',
-                            isUnderMaintenance: false,
-                            maintenanceNote: '',
-                            features: ['Projector', 'Video Conference System', 'Whiteboard'],
-                            equipment: ['Projector', 'Video Conference System', 'Whiteboard'],
-                            maintenanceSchedule: 'Quarterly',
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString()
-                        },
-                        {
-                            id: 'sample-3',
-                            name: 'Science Lab',
-                            type: 'lab',
-                            description: 'Advanced science laboratory with modern equipment',
-                            category: 'Laboratory',
-                            location: 'Building C, Room 301',
-                            capacity: 20,
-                            status: 'available',
-                            isUnderMaintenance: false,
-                            maintenanceNote: '',
-                            features: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
-                            equipment: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
-                            maintenanceSchedule: 'Weekly',
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString()
-                        }
-                    ];
-                    
-                    result += `✅ Sample resources loaded: ${sampleResources.length} resources\n\n`;
-                    result += 'Sample Resources:\n';
-                    sampleResources.forEach((resource, index) => {
-                        result += `${index + 1}. ${resource.name} (${resource.type}) - ${resource.status}\n`;
-                    });
-                    
-                    updateStatus('resources-status', 'Sample Data', 'warning');
+                    updateStatus('resources-status', 'Empty', 'warning');
                     showResult('resources-result', result, 'warning');
                 } else {
                     const resources = snapshot.docs.map(doc => ({
@@ -557,11 +497,10 @@
                 try {
                     const resourcesRef = collection(db, 'resources');
                     const resourcesSnapshot = await getDocs(resourcesRef);
+                    results.resources = resourcesSnapshot.docs.length;
                     if (resourcesSnapshot.empty) {
-                        results.resources = 3; // Sample data
-                        result += `✅ Resources: 3 sample resources (no data in Firestore)\n`;
+                        result += `⚠️ Resources: 0 found (collection is empty)\n`;
                     } else {
-                        results.resources = resourcesSnapshot.docs.length;
                         result += `✅ Resources: ${results.resources} found\n`;
                     }
                 } catch (error) {
