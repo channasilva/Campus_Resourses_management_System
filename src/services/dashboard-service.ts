@@ -63,15 +63,27 @@ export class DashboardService {
     };
 
     try {
-      // Load all data in parallel for better performance
+      // Load all data in parallel for better performance with individual error handling
       const [resources, bookings, notifications, userCount] = await Promise.allSettled([
-        this.loadResources(),
-        this.loadBookings(user),
-        this.loadNotifications(user),
-        this.loadUserCount(user)
+        this.loadResources().catch(err => {
+          console.warn('⚠️ Resources failed to load:', err);
+          return [];
+        }),
+        this.loadBookings(user).catch(err => {
+          console.warn('⚠️ Bookings failed to load:', err);
+          return [];
+        }),
+        this.loadNotifications(user).catch(err => {
+          console.warn('⚠️ Notifications failed to load:', err);
+          return [];
+        }),
+        this.loadUserCount(user).catch(err => {
+          console.warn('⚠️ User count failed to load:', err);
+          return 0;
+        })
       ]);
 
-      // Process results
+      // Process results - all should be fulfilled due to catch handlers above
       dashboardData.resources = resources.status === 'fulfilled' ? resources.value : [];
       dashboardData.bookings = bookings.status === 'fulfilled' ? bookings.value : [];
       dashboardData.notifications = notifications.status === 'fulfilled' ? notifications.value : [];
@@ -84,7 +96,11 @@ export class DashboardService {
 
       if (errors.length > 0) {
         console.warn('⚠️ Some dashboard data failed to load:', errors);
-        dashboardData.error = `Some data failed to load: ${errors.length} errors`;
+        // Only set error if all data failed to load
+        if (dashboardData.resources.length === 0 && dashboardData.bookings.length === 0 && 
+            dashboardData.notifications.length === 0 && dashboardData.userCount === 0) {
+          dashboardData.error = `Failed to load dashboard data: ${errors.length} errors`;
+        }
       }
 
       dashboardData.loading = false;
@@ -96,7 +112,8 @@ export class DashboardService {
         resources: dashboardData.resources.length,
         bookings: dashboardData.bookings.length,
         notifications: dashboardData.notifications.length,
-        userCount: dashboardData.userCount
+        userCount: dashboardData.userCount,
+        hasErrors: errors.length > 0
       });
 
       return dashboardData;

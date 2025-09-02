@@ -428,24 +428,43 @@ class FirebaseService {
     try {
       console.log('🔍 Fetching resources from Firestore...');
       
-      const resourcesRef = collection(db, 'resources');
-      const snapshot = await getDocs(resourcesRef);
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 10000);
+      });
       
-      if (snapshot.empty) {
-        console.log('📊 No resources found in Firestore');
-        return [];
+      const resourcesPromise = (async () => {
+        const resourcesRef = collection(db, 'resources');
+        const snapshot = await getDocs(resourcesRef);
+        
+        if (snapshot.empty) {
+          console.log('📊 No resources found in Firestore');
+          return [];
+        }
+        
+        const resources = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Resource[];
+        
+        console.log(`✅ Successfully fetched ${resources.length} resources from Firestore`);
+        console.log('📋 Resources found:', resources.map(r => `${r.name} (${r.type})`));
+        return resources;
+      })();
+      
+      return await Promise.race([resourcesPromise, timeoutPromise]);
+    } catch (error: any) {
+      console.error('❌ Error getting resources:', error);
+      
+      // Handle specific Firebase errors
+      if (error.code === 'unavailable') {
+        console.warn('⚠️ Firebase service temporarily unavailable');
+      } else if (error.code === 'permission-denied') {
+        console.warn('⚠️ Permission denied accessing resources');
+      } else if (error.message === 'Request timeout') {
+        console.warn('⚠️ Request timed out');
       }
       
-      const resources = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Resource[];
-      
-      console.log(`✅ Successfully fetched ${resources.length} resources from Firestore`);
-      console.log('📋 Resources found:', resources.map(r => `${r.name} (${r.type})`));
-      return resources;
-    } catch (error) {
-      console.error('❌ Error getting resources:', error);
       return [];
     }
   }

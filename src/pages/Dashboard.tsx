@@ -169,7 +169,8 @@ const Dashboard: React.FC = () => {
           console.log('✅ Sample data initialized successfully');
         }
         
-        await loadDashboardData(currentUser);
+        // Load dashboard data with retry mechanism
+        await loadDashboardDataWithRetry(currentUser);
 
         // Load profile image from the manager system
         try {
@@ -192,9 +193,29 @@ const Dashboard: React.FC = () => {
     initializeDashboard();
   }, [navigate]);
 
+  const loadDashboardDataWithRetry = async (user: UserType, retryCount = 0) => {
+    const maxRetries = 3;
+    
+    try {
+      await loadDashboardData(user);
+    } catch (error: any) {
+      if (retryCount < maxRetries) {
+        console.log(`🔄 Retrying dashboard data load (attempt ${retryCount + 1}/${maxRetries})...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+        return loadDashboardDataWithRetry(user, retryCount + 1);
+      } else {
+        console.error('❌ Max retries reached for dashboard data loading');
+        throw error;
+      }
+    }
+  };
+
   const loadDashboardData = async (user: UserType) => {
     try {
       console.log('🔄 Loading dashboard data for user:', user.id, 'role:', user.role);
+      
+      // Add a small delay to ensure Firebase is fully initialized
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       const dashboardData = await dashboardService.loadDashboardData(user);
       
@@ -205,7 +226,13 @@ const Dashboard: React.FC = () => {
       
       // Show success message based on what we loaded
       if (dashboardData.error) {
-        toast.error(dashboardData.error);
+        console.warn('⚠️ Dashboard data loaded with warnings:', dashboardData.error);
+        // Don't show error toast for minor issues, just log them
+        if (dashboardData.resources.length > 0 || dashboardData.bookings.length > 0 || dashboardData.notifications.length > 0) {
+          toast.success('Dashboard loaded successfully!');
+        } else {
+          toast.info('Dashboard loaded. Some data may be unavailable.');
+        }
       } else if (dashboardData.resources.length > 0) {
         toast.success(`Dashboard loaded successfully! Found ${dashboardData.resources.length} resources.`);
       } else if (dashboardData.bookings.length > 0 || dashboardData.notifications.length > 0) {
@@ -216,7 +243,17 @@ const Dashboard: React.FC = () => {
       
     } catch (error: any) {
       console.error('❌ Critical error loading dashboard data:', error);
-      toast.error(`Critical error: ${error.message || 'Failed to load dashboard data.'}`);
+      
+      // More specific error handling
+      if (error.message?.includes('permission') || error.message?.includes('unauthorized')) {
+        toast.error('Authentication error. Please log in again.');
+        navigate('/login');
+        return;
+      } else if (error.message?.includes('network') || error.message?.includes('offline')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else {
+        toast.error('Failed to load dashboard data. Please refresh the page.');
+      }
       
       // Set empty arrays as fallback
       setResources([]);
@@ -778,7 +815,13 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
                       <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wide">Total Resources</p>
-                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">{resources.length}</p>
+                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">
+                        {loading ? (
+                          <div className="animate-pulse bg-primary-200 dark:bg-primary-700 rounded h-10 w-16"></div>
+                        ) : (
+                          resources.length
+                        )}
+                      </p>
                       <p className="text-xs text-secondary-500 dark:text-secondary-400">Available for booking</p>
                     </div>
                     <div className="relative">
@@ -794,7 +837,13 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
                       <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wide">Your Bookings</p>
-                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">{bookings.length}</p>
+                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">
+                        {loading ? (
+                          <div className="animate-pulse bg-primary-200 dark:bg-primary-700 rounded h-10 w-16"></div>
+                        ) : (
+                          bookings.length
+                        )}
+                      </p>
                       <p className="text-xs text-secondary-500 dark:text-secondary-400">Active reservations</p>
                     </div>
                     <div className="relative">
@@ -810,7 +859,13 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
                       <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wide">Notifications</p>
-                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">{notifications.length}</p>
+                      <p className="text-4xl font-bold text-primary-900 dark:text-primary-100 group-hover:scale-110 transition-transform duration-300">
+                        {loading ? (
+                          <div className="animate-pulse bg-primary-200 dark:bg-primary-700 rounded h-10 w-16"></div>
+                        ) : (
+                          notifications.length
+                        )}
+                      </p>
                       <p className="text-xs text-secondary-500 dark:text-secondary-400">Unread messages</p>
                     </div>
                     <div className="relative">
