@@ -1,0 +1,49 @@
+// Updated Firestore Security Rules - Fixed for Registration
+// Copy these rules to your Firebase Console → Firestore Database → Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to create their own profile during registration
+    // and read/write their own data after authentication
+    match /users/{userId} {
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to read all users (for admin purposes)
+    match /users/{document=**} {
+      allow read: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read/write resources
+    match /resources/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read/write bookings
+    match /bookings/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read/write notifications
+    match /notifications/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read/write maintenance records
+    match /maintenance/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read/write audit logs
+    match /audit_logs/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read/write system settings
+    match /system/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

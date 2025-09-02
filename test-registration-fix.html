@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Registration Fix</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .credentials {
+            background-color: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+        .instructions {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Registration Fix</h1>
+        
+        <div class="instructions">
+            <h3>⚠️ IMPORTANT: Update Firestore Rules First!</h3>
+            <p>Before testing, you must update your Firestore security rules:</p>
+            <ol>
+                <li>Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a></li>
+                <li>Select project: <strong>campus-resources-demo</strong></li>
+                <li>Go to <strong>Firestore Database → Rules</strong></li>
+                <li>Replace rules with the code from <strong>firestore-rules-fixed.txt</strong></li>
+                <li>Click <strong>Publish</strong></li>
+            </ol>
+        </div>
+        
+        <form id="userForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" value="testuser3" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="testuser3@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="password123" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <select id="role" required>
+                    <option value="student" selected>Student</option>
+                    <option value="lecturer">Lecturer</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="department">Department (optional):</label>
+                <input type="text" id="department" value="Computer Science">
+            </div>
+            
+            <button type="submit">Test Registration</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const submitButton = document.querySelector('button[type="submit"]');
+            
+            // Get form data
+            const userData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value,
+                department: document.getElementById('department').value || null
+            };
+            
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.textContent = 'Testing Registration...';
+            resultDiv.style.display = 'none';
+            
+            try {
+                console.log('🧪 Testing registration with new rules...', userData);
+                
+                // Create user in Firebase Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+                const user = userCredential.user;
+                
+                console.log('✅ Firebase Auth user created:', user.uid);
+                
+                // Create user profile in Firestore
+                const userProfile = {
+                    id: user.uid,
+                    username: userData.username,
+                    email: userData.email,
+                    role: userData.role,
+                    department: userData.department || null,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                await setDoc(doc(db, 'users', user.uid), userProfile);
+                console.log('✅ User profile stored in Firestore - Rules are working!');
+                
+                // Show success message
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h3>🎉 Registration Test SUCCESSFUL!</h3>
+                    <div class="credentials">
+                        <p><strong>Email:</strong> ${userData.email}</p>
+                        <p><strong>Password:</strong> ${userData.password}</p>
+                        <p><strong>Username:</strong> ${userData.username}</p>
+                        <p><strong>Role:</strong> ${userData.role}</p>
+                    </div>
+                    <p>✅ Firestore rules are working correctly!</p>
+                    <p>✅ You can now register users on the main site.</p>
+                `;
+                resultDiv.style.display = 'block';
+                
+                // Reset form
+                document.getElementById('userForm').reset();
+                
+            } catch (error) {
+                console.error('❌ Registration test failed:', error);
+                
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Registration Test FAILED</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Error Code:</strong> ${error.code}</p>
+                    <p>This usually means the Firestore rules haven't been updated yet.</p>
+                    <p>Please follow the instructions above to update the rules.</p>
+                `;
+                resultDiv.style.display = 'block';
+            } finally {
+                // Reset button state
+                submitButton.disabled = false;
+                submitButton.textContent = 'Test Registration';
+            }
+        });
+    </script>
+</body>
+</html>

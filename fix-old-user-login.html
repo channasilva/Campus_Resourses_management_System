@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Old User Login Issues</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .result.info {
+            background-color: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        .user-data {
+            background-color: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .instructions {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .step {
+            margin-bottom: 10px;
+        }
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Old User Login Issues</h1>
+        
+        <div class="instructions">
+            <h3>📋 What This Tool Does:</h3>
+            <div class="step">1. <strong>Test Login:</strong> Try to login with the user's credentials</div>
+            <div class="step">2. <strong>Check Data:</strong> Examine the user's profile data in Firestore</div>
+            <div class="step">3. <strong>Fix Issues:</strong> Update missing or incorrect fields</div>
+            <div class="step">4. <strong>Verify Fix:</strong> Test login again to confirm it works</div>
+        </div>
+        
+        <div class="two-column">
+            <div>
+                <h3>🔍 Step 1: Test Current Login</h3>
+                <form id="testLoginForm">
+                    <div class="form-group">
+                        <label for="testEmail">Email:</label>
+                        <input type="email" id="testEmail" placeholder="user@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="testPassword">Password:</label>
+                        <input type="password" id="testPassword" placeholder="Enter password" required>
+                    </div>
+                    <button type="submit">Test Login</button>
+                </form>
+            </div>
+            
+            <div>
+                <h3>🔧 Step 2: Fix User Data</h3>
+                <form id="fixUserForm">
+                    <div class="form-group">
+                        <label for="fixEmail">Email (same as above):</label>
+                        <input type="email" id="fixEmail" placeholder="user@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" placeholder="Enter username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Role:</label>
+                        <select id="role" required>
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Department:</label>
+                        <input type="text" id="department" placeholder="Computer Science">
+                    </div>
+                    <button type="submit">Fix User Data</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Test login form
+        document.getElementById('testLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const submitButton = document.querySelector('#testLoginForm button[type="submit"]');
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.textContent = 'Testing Login...';
+            resultDiv.style.display = 'none';
+            
+            try {
+                console.log('🔍 Testing login for:', email);
+                
+                // Try to sign in
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                console.log('✅ Login successful:', user.uid);
+                
+                // Get user data from Firestore
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                
+                if (!userDoc.exists()) {
+                    resultDiv.className = 'result.error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Login Test Failed</h3>
+                        <p><strong>Issue:</strong> User exists in Firebase Auth but not in Firestore</p>
+                        <p><strong>Solution:</strong> Use the "Fix User Data" form to create the missing Firestore document</p>
+                        <div class="user-data">User UID: ${user.uid}</div>
+                    `;
+                } else {
+                    const userData = userDoc.data();
+                    resultDiv.className = 'result.success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Login Test Successful!</h3>
+                        <p>User can login successfully. No issues found.</p>
+                        <div class="user-data">${JSON.stringify(userData, null, 2)}</div>
+                    `;
+                }
+                
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                console.error('❌ Login test failed:', error);
+                
+                resultDiv.className = 'result.error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Login Test Failed</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Error Code:</strong> ${error.code}</p>
+                    <p><strong>Possible Issues:</strong></p>
+                    <ul>
+                        <li>Wrong password</li>
+                        <li>User doesn't exist in Firebase Auth</li>
+                        <li>User exists in Auth but missing Firestore data</li>
+                    </ul>
+                    <p><strong>Solution:</strong> Use the "Fix User Data" form to resolve the issue</p>
+                `;
+                resultDiv.style.display = 'block';
+            } finally {
+                // Reset button state
+                submitButton.disabled = false;
+                submitButton.textContent = 'Test Login';
+            }
+        });
+
+        // Fix user form
+        document.getElementById('fixUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const submitButton = document.querySelector('#fixUserForm button[type="submit"]');
+            
+            const email = document.getElementById('fixEmail').value;
+            const username = document.getElementById('username').value;
+            const role = document.getElementById('role').value;
+            const department = document.getElementById('department').value;
+            
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.textContent = 'Fixing User Data...';
+            resultDiv.style.display = 'none';
+            
+            try {
+                console.log('🔧 Fixing user data for:', email);
+                
+                // First, try to sign in to get the user's UID
+                const testPassword = document.getElementById('testPassword').value;
+                let userCredential;
+                
+                try {
+                    userCredential = await signInWithEmailAndPassword(auth, email, testPassword);
+                } catch (error) {
+                    if (error.code === 'auth/wrong-password') {
+                        resultDiv.className = 'result.error';
+                        resultDiv.innerHTML = `
+                            <h3>❌ Cannot Fix User Data</h3>
+                            <p><strong>Issue:</strong> Wrong password provided</p>
+                            <p><strong>Solution:</strong> Please provide the correct password in the "Test Login" form first</p>
+                        `;
+                        resultDiv.style.display = 'block';
+                        return;
+                    } else {
+                        throw error;
+                    }
+                }
+                
+                const user = userCredential.user;
+                console.log('✅ Got user UID:', user.uid);
+                
+                // Check if user document exists
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                
+                const userData = {
+                    id: user.uid,
+                    username: username,
+                    email: email,
+                    role: role,
+                    department: department || null,
+                    createdAt: userDoc.exists() ? userDoc.data().createdAt : new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    lastLogin: new Date().toISOString()
+                };
+                
+                if (userDoc.exists()) {
+                    // Update existing document
+                    await updateDoc(doc(db, 'users', user.uid), userData);
+                    console.log('✅ Updated existing user document');
+                } else {
+                    // Create new document
+                    await setDoc(doc(db, 'users', user.uid), userData);
+                    console.log('✅ Created new user document');
+                }
+                
+                resultDiv.className = 'result.success';
+                resultDiv.innerHTML = `
+                    <h3>✅ User Data Fixed Successfully!</h3>
+                    <p>The user should now be able to login properly.</p>
+                    <div class="user-data">${JSON.stringify(userData, null, 2)}</div>
+                    <p><strong>Next Step:</strong> Try logging in again with the same credentials</p>
+                `;
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                console.error('❌ Fix failed:', error);
+                
+                resultDiv.className = 'result.error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Fix Failed</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Error Code:</strong> ${error.code}</p>
+                    <p>Please check the browser console for more details.</p>
+                `;
+                resultDiv.style.display = 'block';
+            } finally {
+                // Reset button state
+                submitButton.disabled = false;
+                submitButton.textContent = 'Fix User Data';
+            }
+        });
+    </script>
+</body>
+</html>

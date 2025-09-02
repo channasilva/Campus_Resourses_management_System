@@ -108,7 +108,7 @@ class FirebaseService {
 
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
     try {
-      console.log('?? Starting email/password login...', { email });
+      console.log('🚀 Starting email/password login...', { email });
       
       const userCredential: UserCredential = await signInWithEmailAndPassword(
         auth,
@@ -117,17 +117,50 @@ class FirebaseService {
       );
 
       const firebaseUser = userCredential.user;
-      console.log('? Firebase Auth login successful:', firebaseUser.uid);
+      console.log('✅ Firebase Auth login successful:', firebaseUser.uid);
       
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (!userDoc.exists()) {
-        console.error('? User document not found in Firestore for:', firebaseUser.uid);
-        throw new Error('User profile not found. Please contact support.');
+        console.error('❌ User document not found in Firestore for:', firebaseUser.uid);
+        
+        // Try to create a basic user profile for old users
+        console.log('🔧 Attempting to create missing user profile...');
+        const basicUserProfile: User = {
+          id: firebaseUser.uid,
+          username: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
+          email: firebaseUser.email!,
+          role: 'student', // Default role for old users
+          department: 'General',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        };
+        
+        try {
+          await setDoc(doc(db, 'users', firebaseUser.uid), basicUserProfile);
+          console.log('✅ Created missing user profile for old user');
+          
+          const token = await firebaseUser.getIdToken();
+          return { user: basicUserProfile, token };
+        } catch (createError) {
+          console.error('❌ Failed to create user profile:', createError);
+          throw new Error('User profile not found and could not be created. Please contact support or try registering again.');
+        }
       }
 
       const userData = userDoc.data() as User;
-      console.log('? User profile found:', userData.username);
+      console.log('✅ User profile found:', userData.username);
+      
+      // Validate and fix missing required fields for old users
+      const updatedUserData = this.validateAndFixUserData(userData, firebaseUser);
+      
+      // Update user data if any fields were missing
+      if (JSON.stringify(userData) !== JSON.stringify(updatedUserData)) {
+        console.log('🔧 Updating user data with missing fields...');
+        await updateDoc(doc(db, 'users', firebaseUser.uid), updatedUserData);
+        console.log('✅ User data updated successfully');
+      }
       
       const token = await firebaseUser.getIdToken();
 
@@ -136,10 +169,10 @@ class FirebaseService {
         lastLogin: new Date().toISOString()
       });
 
-      console.log('?? Login completed successfully!');
-      return { user: userData, token };
+      console.log('🎉 Login completed successfully!');
+      return { user: updatedUserData, token };
     } catch (error: any) {
-      console.error('? Login error:', error);
+      console.error('❌ Login error:', error);
       
       // Handle specific Firebase Auth errors
       if (error.code === 'auth/user-not-found') {
@@ -160,6 +193,25 @@ class FirebaseService {
         throw new Error(error.message || 'Login failed. Please check your credentials and try again.');
       }
     }
+  }
+
+  // Helper method to validate and fix user data for old users
+  private validateAndFixUserData(userData: any, firebaseUser: any): User {
+    const fixedUserData: User = {
+      id: userData.id || firebaseUser.uid,
+      username: userData.username || firebaseUser.displayName || firebaseUser.email!.split('@')[0],
+      email: userData.email || firebaseUser.email!,
+      role: userData.role || 'student', // Default role for old users
+      department: userData.department || 'General',
+      profilePicture: userData.profilePicture || undefined,
+      profilePicturePublicId: userData.profilePicturePublicId || undefined,
+      contactInfo: userData.contactInfo || undefined,
+      createdAt: userData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastLogin: userData.lastLogin || new Date().toISOString()
+    };
+    
+    return fixedUserData;
   }
 
   async logout(): Promise<void> {
