@@ -23,13 +23,17 @@ export const storage = getStorage(app);
 
 // Initialize Google Auth Provider with enhanced configuration
 export const googleProvider = new GoogleAuthProvider();
+
+// Add required scopes
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-// Configure Google provider for better user experience
+// Configure Google provider for better user experience and permission handling
 googleProvider.setCustomParameters({
   prompt: 'select_account',
-  hd: undefined // Allow any domain, not just specific hosted domains
+  hd: undefined, // Allow any domain, not just specific hosted domains
+  access_type: 'online',
+  include_granted_scopes: true
 });
 
 // Add additional configuration for production environment
@@ -39,6 +43,13 @@ if (typeof window !== 'undefined') {
   console.log('🌐 Current domain:', currentDomain);
   console.log('🌐 Current origin:', window.location.origin);
   console.log('🌐 Current pathname:', window.location.pathname);
+  
+  // Log Firebase configuration for debugging
+  console.log(' Firebase Config:', {
+    authDomain: firebaseConfig.authDomain,
+    projectId: firebaseConfig.projectId,
+    currentDomain: currentDomain
+  });
 }
 
 export default app;
