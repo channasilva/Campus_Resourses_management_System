@@ -783,6 +783,47 @@ class FirebaseService {
       throw new Error(error.message);
     }
   }
+
+
 }
 
-export const firebaseService = new FirebaseService();
+// Create service instance
+const firebaseService = new FirebaseService();
+
+// Ensure all methods are properly exported
+export const firebaseServiceWithMethods = {
+  // Authentication methods
+  login: firebaseService.login.bind(firebaseService),
+  register: firebaseService.register.bind(firebaseService),
+  logout: firebaseService.logout.bind(firebaseService),
+  signInWithGoogle: firebaseService.signInWithGoogle.bind(firebaseService),
+  getCurrentUser: firebaseService.getCurrentUser.bind(firebaseService),
+  isAuthenticated: firebaseService.isAuthenticated.bind(firebaseService),
+  
+  // User methods
+  getAllUsers: firebaseService.getAllUsers.bind(firebaseService),
+  
+  // Resource methods
+  getResources: firebaseService.getResources.bind(firebaseService),
+  createResource: firebaseService.createResource.bind(firebaseService),
+  updateResource: firebaseService.updateResource.bind(firebaseService),
+  deleteResource: firebaseService.deleteResource.bind(firebaseService),
+  
+  // Booking methods
+  getAllBookings: firebaseService.getAllBookings.bind(firebaseService),
+  getBookingsByUser: firebaseService.getBookingsByUser.bind(firebaseService),
+  createBooking: firebaseService.createBooking.bind(firebaseService),
+  updateBooking: firebaseService.updateBooking.bind(firebaseService),
+  deleteBooking: firebaseService.deleteBooking.bind(firebaseService),
+  
+  // Notification methods
+  getAllNotifications: firebaseService.getAllNotifications.bind(firebaseService),
+  getNotificationsByUser: firebaseService.getNotificationsByUser.bind(firebaseService),
+  createNotification: firebaseService.createNotification.bind(firebaseService),
+  markNotificationAsRead: firebaseService.markNotificationAsRead.bind(firebaseService),
+  deleteNotification: firebaseService.deleteNotification.bind(firebaseService)
+};
+
+// Export both for compatibility
+export { firebaseService };
+export default firebaseServiceWithMethods;

@@ -255,8 +255,18 @@ const Dashboard: React.FC = () => {
           console.log('✅ User count loaded:', userCount);
         } else {
           console.log('🔔 Loading user notifications...');
-          notificationsData = await firebaseService.getNotificationsByUser(userId);
-          console.log('✅ User notifications loaded:', notificationsData.length);
+          try {
+            notificationsData = await firebaseService.getNotificationsByUser(userId);
+            console.log('✅ User notifications loaded:', notificationsData.length);
+          } catch (methodError) {
+            console.warn('⚠️ getNotificationsByUser method not available, using fallback:', methodError);
+            // Fallback: get all notifications and filter by user
+            const allNotifications = await firebaseService.getAllNotifications();
+            notificationsData = allNotifications.filter(notification => 
+              notification.userId === userId || notification.isSystemNotification
+            );
+            console.log('✅ User notifications loaded via fallback:', notificationsData.length);
+          }
         }
       } catch (error) {
         console.error('❌ Error loading notifications:', error);
@@ -272,8 +282,16 @@ const Dashboard: React.FC = () => {
           console.log('✅ All bookings loaded:', bookingsData.length);
         } else {
           console.log('👤 Loading user bookings...');
-          bookingsData = await firebaseService.getBookingsByUser(userId);
-          console.log('✅ User bookings loaded:', bookingsData.length);
+          try {
+            bookingsData = await firebaseService.getBookingsByUser(userId);
+            console.log('✅ User bookings loaded:', bookingsData.length);
+          } catch (methodError) {
+            console.warn('⚠️ getBookingsByUser method not available, using fallback:', methodError);
+            // Fallback: get all bookings and filter by user
+            const allBookings = await firebaseService.getAllBookings();
+            bookingsData = allBookings.filter(booking => booking.userId === userId);
+            console.log('✅ User bookings loaded via fallback:', bookingsData.length);
+          }
         }
       } catch (error) {
         console.error('❌ Error loading bookings:', error);
