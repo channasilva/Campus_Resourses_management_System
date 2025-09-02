@@ -111,7 +111,7 @@ const Dashboard: React.FC = () => {
     const initializeDashboard = async () => {
       try {
         console.log('🔄 Initializing dashboard...');
-        console.log('🕒 Dashboard version: 2025-01-09-v3');
+        console.log('🕒 Dashboard version: 2025-01-09-v4');
         
         // Add error boundary for third-party script errors
         window.addEventListener('error', (event) => {
@@ -256,16 +256,34 @@ const Dashboard: React.FC = () => {
         } else {
           console.log('🔔 Loading user notifications...');
           try {
-            notificationsData = await firebaseService.getNotificationsByUser(userId);
-            console.log('✅ User notifications loaded:', notificationsData.length);
-          } catch (methodError) {
-            console.warn('⚠️ getNotificationsByUser method not available, using fallback:', methodError);
-            // Fallback: get all notifications and filter by user
-            const allNotifications = await firebaseService.getAllNotifications();
-            notificationsData = allNotifications.filter(notification => 
-              notification.userId === userId || notification.isSystemNotification
-            );
-            console.log('✅ User notifications loaded via fallback:', notificationsData.length);
+            // Direct Firebase approach to avoid service method issues
+            console.log('🔄 Using direct Firebase for notifications...');
+            const db = getFirestore();
+            const notificationsRef = collection(db, 'notifications');
+            const snapshot = await getDocs(notificationsRef);
+            
+            if (snapshot.empty) {
+              console.log('📊 No notifications found in Firestore');
+              notificationsData = [];
+            } else {
+              const allNotifications = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              })) as Notification[];
+              
+              // Filter for user-specific and system notifications
+              notificationsData = allNotifications.filter(notification => 
+                notification.userId === userId || notification.isSystemNotification
+              );
+              
+              // Sort by creation date
+              notificationsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+              
+              console.log(`✅ Direct Firebase: Successfully fetched ${notificationsData.length} user notifications`);
+            }
+          } catch (error) {
+            console.error('❌ Direct Firebase notification loading failed:', error);
+            notificationsData = [];
           }
         }
       } catch (error) {
@@ -283,14 +301,32 @@ const Dashboard: React.FC = () => {
         } else {
           console.log('👤 Loading user bookings...');
           try {
-            bookingsData = await firebaseService.getBookingsByUser(userId);
-            console.log('✅ User bookings loaded:', bookingsData.length);
-          } catch (methodError) {
-            console.warn('⚠️ getBookingsByUser method not available, using fallback:', methodError);
-            // Fallback: get all bookings and filter by user
-            const allBookings = await firebaseService.getAllBookings();
-            bookingsData = allBookings.filter(booking => booking.userId === userId);
-            console.log('✅ User bookings loaded via fallback:', bookingsData.length);
+            // Direct Firebase approach to avoid service method issues
+            console.log('🔄 Using direct Firebase for bookings...');
+            const db = getFirestore();
+            const bookingsRef = collection(db, 'bookings');
+            const snapshot = await getDocs(bookingsRef);
+            
+            if (snapshot.empty) {
+              console.log('📊 No bookings found in Firestore');
+              bookingsData = [];
+            } else {
+              const allBookings = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              })) as Booking[];
+              
+              // Filter for user-specific bookings
+              bookingsData = allBookings.filter(booking => booking.userId === userId);
+              
+              // Sort by creation date
+              bookingsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+              
+              console.log(`✅ Direct Firebase: Successfully fetched ${bookingsData.length} user bookings`);
+            }
+          } catch (error) {
+            console.error('❌ Direct Firebase booking loading failed:', error);
+            bookingsData = [];
           }
         }
       } catch (error) {
