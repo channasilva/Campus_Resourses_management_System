@@ -32,4 +32,13 @@ googleProvider.setCustomParameters({
   hd: undefined // Allow any domain, not just specific hosted domains
 });
 
+// Add additional configuration for production environment
+if (typeof window !== 'undefined') {
+  // Ensure proper domain handling for GitHub Pages
+  const currentDomain = window.location.hostname;
+  console.log('🌐 Current domain:', currentDomain);
+  console.log('🌐 Current origin:', window.location.origin);
+  console.log('🌐 Current pathname:', window.location.pathname);
+}
+
 export default app;

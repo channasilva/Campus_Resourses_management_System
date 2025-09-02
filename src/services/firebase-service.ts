@@ -156,13 +156,23 @@ class FirebaseService {
   async signInWithGoogle(): Promise<{ user: User; token: string }> {
     try {
       console.log('🚀 Starting Google Sign-In process...');
+      console.log('🌐 Current URL:', window.location.href);
+      console.log('🌐 Current origin:', window.location.origin);
       
-      // Configure Google provider with additional settings
+      // Configure Google provider with additional settings for better compatibility
       googleProvider.setCustomParameters({
-        prompt: 'select_account'
+        prompt: 'select_account',
+        access_type: 'online'
       });
       
+      // Add additional scopes for better user data access
+      googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
+      googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+      
+      console.log('🔧 Google provider configured with scopes and parameters');
+      
       // Sign in with Google popup
+      console.log('🔐 Attempting Google Sign-In popup...');
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
       
