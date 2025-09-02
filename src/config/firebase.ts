@@ -33,7 +33,7 @@ googleProvider.setCustomParameters({
   prompt: 'select_account',
   hd: undefined, // Allow any domain, not just specific hosted domains
   access_type: 'online',
-  include_granted_scopes: true
+  include_granted_scopes: 'true'
 });
 
 // Add additional configuration for production environment
