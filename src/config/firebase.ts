@@ -40,15 +40,24 @@ googleProvider.setCustomParameters({
 if (typeof window !== 'undefined') {
   // Ensure proper domain handling for GitHub Pages
   const currentDomain = window.location.hostname;
+  const currentOrigin = window.location.origin;
+  
   console.log('🌐 Current domain:', currentDomain);
-  console.log('🌐 Current origin:', window.location.origin);
+  console.log('🌐 Current origin:', currentOrigin);
   console.log('🌐 Current pathname:', window.location.pathname);
   
   // Log Firebase configuration for debugging
   console.log(' Firebase Config:', {
     authDomain: firebaseConfig.authDomain,
     projectId: firebaseConfig.projectId,
-    currentDomain: currentDomain
+    currentDomain: currentDomain,
+    currentOrigin: currentOrigin
+  });
+  
+  // Additional debugging for OAuth issues
+  console.log('🔧 Google Provider Config:', {
+    scopes: googleProvider.getScopes(),
+    customParameters: googleProvider.getCustomParameters()
   });
 }
 

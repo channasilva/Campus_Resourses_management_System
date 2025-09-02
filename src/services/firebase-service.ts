@@ -161,14 +161,18 @@ class FirebaseService {
       console.log('🚀 Starting Google Sign-In process...');
       console.log('🌐 Current URL:', window.location.href);
       console.log('🌐 Current origin:', window.location.origin);
+      console.log('🌐 Current hostname:', window.location.hostname);
       
-      // Configure Google provider with additional settings for better compatibility
+      // Enhanced Google provider configuration
       googleProvider.setCustomParameters({
         prompt: 'select_account',
-        access_type: 'online'
+        access_type: 'online',
+        include_granted_scopes: 'true'
       });
       
       console.log('🔧 Google provider configured with parameters');
+      console.log(' Provider scopes:', googleProvider.getScopes());
+      console.log('🔧 Provider custom params:', googleProvider.getCustomParameters());
       
       // Sign in with Google popup
       console.log('🔐 Attempting Google Sign-In popup...');
@@ -241,17 +245,17 @@ class FirebaseService {
       console.error('❌ Error code:', error.code);
       console.error('❌ Error message:', error.message);
       
-      // Handle specific error cases with more detailed messages
+      // Enhanced error handling for permission issues
       if (error.code === 'auth/popup-closed-by-user') {
-        throw new Error('Sign-in was cancelled. Please try again.');
+        throw new Error('Sign-in popup was closed. Please try again.');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        throw new Error('Another sign-in popup is already open. Please close it and try again.');
       } else if (error.code === 'auth/popup-blocked') {
-        throw new Error('Pop-up was blocked by your browser. Please allow pop-ups for this site and try again.');
+        throw new Error('Sign-in popup was blocked by your browser. Please allow popups and try again.');
       } else if (error.code === 'auth/unauthorized-domain') {
         throw new Error('This domain is not authorized for Google Sign-In. Please contact the administrator.');
       } else if (error.code === 'auth/operation-not-allowed') {
         throw new Error('Google Sign-In is not enabled. Please contact the administrator.');
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        throw new Error('Another sign-in popup is already open. Please close it and try again.');
       } else if (error.code === 'auth/network-request-failed') {
         throw new Error('Network error. Please check your internet connection and try again.');
       } else if (error.code === 'auth/internal-error') {
@@ -260,6 +264,8 @@ class FirebaseService {
         throw new Error('Invalid Firebase API key. Please contact the administrator.');
       } else if (error.code === 'auth/app-not-authorized') {
         throw new Error('This app is not authorized to use Firebase Authentication. Please contact the administrator.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        throw new Error('This domain is not authorized for Google Sign-In. Please contact the administrator.');
       } else {
         // Provide more detailed error for debugging
         const errorMsg = error.code ?
