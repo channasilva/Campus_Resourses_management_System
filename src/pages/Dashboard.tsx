@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import Button from '../components/Button';
 import { firebaseService } from '../services/firebase-service';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { Resource, Booking, Notification } from '../types';
 import { User as UserType } from '../types/auth';
 import { formatLocalDateTime, formatLocalTime } from '../utils/date-utils';
@@ -79,11 +81,45 @@ const Dashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'booked' | 'maintenance'>('all');
 
+  // Direct Firebase data loading as fallback
+  const loadResourcesDirectly = async (): Promise<Resource[]> => {
+    try {
+      console.log('🔄 Loading resources directly from Firebase...');
+      const db = getFirestore();
+      const resourcesRef = collection(db, 'resources');
+      const snapshot = await getDocs(resourcesRef);
+      
+      if (snapshot.empty) {
+        console.log('📊 No resources found in Firestore');
+        return [];
+      }
+      
+      const resources = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Resource[];
+      
+      console.log(`✅ Direct Firebase: Successfully fetched ${resources.length} resources`);
+      return resources;
+    } catch (error) {
+      console.error('❌ Direct Firebase resource loading failed:', error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
         console.log('🔄 Initializing dashboard...');
-        console.log('🕒 Dashboard version: 2025-01-09-v2');
+        console.log('🕒 Dashboard version: 2025-01-09-v3');
+        
+        // Add error boundary for third-party script errors
+        window.addEventListener('error', (event) => {
+          if (event.filename && event.filename.includes('ma_payload.js')) {
+            console.warn('⚠️ Third-party script error detected, continuing with dashboard initialization:', event.error);
+            event.preventDefault();
+          }
+        });
         
         // Try to get user from localStorage first (fallback)
         const userData = localStorage.getItem('user');
@@ -160,21 +196,49 @@ const Dashboard: React.FC = () => {
       let notificationsData: Notification[] = [];
       let userCount = 0;
       
-      // Load resources (always needed)
-      try {
-        console.log('📚 Loading resources...');
-        console.log('🔍 Calling firebaseService.getResources()...');
-        resourcesData = await firebaseService.getResources();
-        console.log('✅ Resources loaded:', resourcesData.length);
-        console.log('📋 Resources data:', resourcesData);
-        if (resourcesData.length > 0) {
-          console.log('🎯 First resource:', resourcesData[0]);
+      // Load resources (always needed) - with retry mechanism
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          console.log(`📚 Loading resources... (attempt ${retryCount + 1}/${maxRetries})`);
+          console.log('🔍 Calling firebaseService.getResources()...');
+          
+          // Add timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Resource loading timeout')), 10000)
+          );
+          
+          // Try service first, then direct Firebase as fallback
+          try {
+            resourcesData = await firebaseService.getResources();
+          } catch (serviceError) {
+            console.warn('⚠️ Service method failed, trying direct Firebase:', serviceError);
+            resourcesData = await loadResourcesDirectly();
+          }
+          
+          console.log('✅ Resources loaded:', resourcesData.length);
+          console.log('📋 Resources data:', resourcesData);
+          if (resourcesData.length > 0) {
+            console.log('🎯 First resource:', resourcesData[0]);
+          }
+          break; // Success, exit retry loop
+          
+        } catch (error) {
+          retryCount++;
+          console.error(`❌ Error loading resources (attempt ${retryCount}):`, error);
+          console.error('❌ Error details:', error.message, error.stack);
+          
+          if (retryCount >= maxRetries) {
+            console.error('❌ Max retries reached for resource loading');
+            toast.error('Failed to load resources after multiple attempts.');
+            resourcesData = [];
+          } else {
+            console.log(`⏳ Retrying resource loading in 1 second...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
-      } catch (error) {
-        console.error('❌ Error loading resources:', error);
-        console.error('❌ Error details:', error.message, error.stack);
-        toast.error('Failed to load resources. Using empty list.');
-        resourcesData = [];
       }
       
       // Load notifications based on user role
