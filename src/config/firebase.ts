@@ -69,7 +69,8 @@ if (typeof window !== 'undefined') {
     port: window.location.port,
     pathname: window.location.pathname,
     search: window.location.search,
-    hash: window.location.hash
+    hash: window.location.hash,
+    expectedClientId: '96808245065-d8miorej2u41ukr07lmc3vvqs2h1fldj.apps.googleusercontent.com'
   });
 }
 
