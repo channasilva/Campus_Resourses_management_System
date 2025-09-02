@@ -157,6 +157,11 @@ class FirebaseService {
     try {
       console.log('🚀 Starting Google Sign-In process...');
       
+      // Configure Google provider with additional settings
+      googleProvider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
       // Sign in with Google popup
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
@@ -214,21 +219,27 @@ class FirebaseService {
       console.error('❌ Error code:', error.code);
       console.error('❌ Error message:', error.message);
       
-      // Handle specific error cases
+      // Handle specific error cases with more detailed messages
       if (error.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled. Please try again.');
       } else if (error.code === 'auth/popup-blocked') {
-        throw new Error('Pop-up was blocked by your browser. Please allow pop-ups and try again.');
+        throw new Error('Pop-up was blocked by your browser. Please allow pop-ups for this site and try again.');
       } else if (error.code === 'auth/unauthorized-domain') {
-        throw new Error('This domain is not authorized for Google Sign-In. Please contact the administrator.');
+        throw new Error('This domain is not authorized for Google Sign-In. The administrator needs to add this domain to Firebase Console.');
       } else if (error.code === 'auth/operation-not-allowed') {
-        throw new Error('Google Sign-In is not enabled. Please contact the administrator.');
+        throw new Error('Google Sign-In is not enabled in Firebase Console. Please contact the administrator.');
       } else if (error.code === 'auth/cancelled-popup-request') {
         throw new Error('Another sign-in popup is already open. Please close it and try again.');
       } else if (error.message.includes('not registered in our system')) {
         throw error; // Re-throw our custom error
       } else if (error.code === 'auth/network-request-failed') {
         throw new Error('Network error. Please check your internet connection and try again.');
+      } else if (error.code === 'auth/internal-error') {
+        throw new Error('Internal authentication error. Please try again or contact support.');
+      } else if (error.code === 'auth/invalid-api-key') {
+        throw new Error('Invalid Firebase API key. Please contact the administrator.');
+      } else if (error.code === 'auth/app-not-authorized') {
+        throw new Error('This app is not authorized to use Firebase Authentication. Please contact the administrator.');
       } else {
         // Provide more detailed error for debugging
         const errorMsg = error.code ?

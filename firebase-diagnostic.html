@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Google Sign-In Diagnostic</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .error { color: red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .success { color: green; background: #e6ffe6; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .info { color: blue; background: #e6f3ff; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 10px 0; font-size: 16px; cursor: pointer; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Firebase Google Sign-In Diagnostic Tool</h1>
+    
+    <div class="info">
+        <strong>Purpose:</strong> This tool will help identify the exact Firebase configuration issue.
+    </div>
+
+    <button onclick="testFirebaseConfig()">🔍 Test Firebase Configuration</button>
+    <button onclick="testGoogleSignIn()">🚀 Test Google Sign-In</button>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        // Firebase configuration (same as your app)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // Make functions global
+        window.testFirebaseConfig = function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h3>🔍 Firebase Configuration Test</h3>';
+            
+            try {
+                results.innerHTML += '<div class="success">✅ Firebase initialized successfully</div>';
+                results.innerHTML += '<div class="info">📋 Project ID: ' + firebaseConfig.projectId + '</div>';
+                results.innerHTML += '<div class="info">🔑 API Key: ' + firebaseConfig.apiKey.substring(0, 20) + '...</div>';
+                results.innerHTML += '<div class="info">🌐 Auth Domain: ' + firebaseConfig.authDomain + '</div>';
+                
+                // Test auth initialization
+                if (auth) {
+                    results.innerHTML += '<div class="success">✅ Firebase Auth initialized</div>';
+                } else {
+                    results.innerHTML += '<div class="error">❌ Firebase Auth failed to initialize</div>';
+                }
+                
+                // Test Google provider
+                if (provider) {
+                    results.innerHTML += '<div class="success">✅ Google Auth Provider created</div>';
+                } else {
+                    results.innerHTML += '<div class="error">❌ Google Auth Provider failed</div>';
+                }
+                
+            } catch (error) {
+                results.innerHTML += '<div class="error">❌ Firebase Configuration Error: ' + error.message + '</div>';
+            }
+        };
+
+        window.testGoogleSignIn = function() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<h3>🚀 Google Sign-In Test</h3>';
+            results.innerHTML += '<div class="info">⏳ Attempting Google Sign-In...</div>';
+            
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    results.innerHTML += '<div class="success">✅ Google Sign-In SUCCESS!</div>';
+                    results.innerHTML += '<div class="info">👤 User: ' + result.user.email + '</div>';
+                    results.innerHTML += '<div class="info">🎉 Google Sign-In is working correctly!</div>';
+                })
+                .catch((error) => {
+                    results.innerHTML += '<div class="error">❌ Google Sign-In Error</div>';
+                    results.innerHTML += '<div class="error">🔍 Error Code: ' + error.code + '</div>';
+                    results.innerHTML += '<div class="error">📝 Error Message: ' + error.message + '</div>';
+                    
+                    // Provide specific solutions
+                    if (error.code === 'auth/operation-not-allowed') {
+                        results.innerHTML += '<div class="error">🔧 SOLUTION: Enable Google provider in Firebase Console</div>';
+                        results.innerHTML += '<div class="error">📍 Go to: Authentication → Sign-in method → Google → Enable</div>';
+                    } else if (error.code === 'auth/unauthorized-domain') {
+                        results.innerHTML += '<div class="error">🔧 SOLUTION: Add domain to Firebase authorized domains</div>';
+                        results.innerHTML += '<div class="error">📍 Add: channasilva.github.io to authorized domains</div>';
+                    } else if (error.code === 'auth/popup-blocked') {
+                        results.innerHTML += '<div class="error">🔧 SOLUTION: Allow popups for this domain</div>';
+                    }
+                });
+        };
+    </script>
+
+    <div style="margin-top: 40px; padding: 20px; background: #f5f5f5; border-radius: 5px;">
+        <h3>📋 Quick Fix Checklist</h3>
+        <p><strong>If you get "operation-not-allowed" error:</strong></p>
+        <ol>
+            <li>Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a></li>
+            <li>Select project: <strong>campus-resources-demo</strong></li>
+            <li>Go to Authentication → Sign-in method</li>
+            <li>Click on Google and Enable it</li>
+            <li>Add your email as project support email</li>
+            <li>Save changes</li>
+        </ol>
+        
+        <p><strong>If you get "unauthorized-domain" error:</strong></p>
+        <ol>
+            <li>In Firebase Console, go to Authentication → Settings</li>
+            <li>Scroll to "Authorized domains"</li>
+            <li>Click "Add domain"</li>
+            <li>Enter: <strong>channasilva.github.io</strong></li>
+            <li>Click "Add"</li>
+        </ol>
+    </div>
+</body>
+</html>

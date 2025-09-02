@@ -21,9 +21,15 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Initialize Google Auth Provider
+// Initialize Google Auth Provider with enhanced configuration
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
+
+// Configure Google provider for better user experience
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+  hd: undefined // Allow any domain, not just specific hosted domains
+});
 
 export default app;
