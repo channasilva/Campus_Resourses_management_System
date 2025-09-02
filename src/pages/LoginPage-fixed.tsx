@@ -59,7 +59,7 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('token', token);
       
       console.log('? Login successful:', user);
-      toast.success("Welcome back, " + user.username + "!");
+      toast.success(Welcome back, !);
       navigate('/dashboard');
     } catch (error: any) {
       console.error('? Login failed:', error);

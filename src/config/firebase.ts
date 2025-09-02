@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -21,47 +21,26 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Initialize Google Auth Provider with enhanced configuration
-export const googleProvider = new GoogleAuthProvider();
-
-// Add required scopes
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
-
-// Configure Google provider for better user experience and permission handling
-googleProvider.setCustomParameters({
-  prompt: 'select_account',
-  hd: undefined, // Allow any domain, not just specific hosted domains
-  access_type: 'online',
-  include_granted_scopes: 'true'
-});
-
-// Add additional configuration for production environment
+// Add configuration for production environment
 if (typeof window !== 'undefined') {
   // Ensure proper domain handling for GitHub Pages
   const currentDomain = window.location.hostname;
   const currentOrigin = window.location.origin;
   
-  console.log('🌐 Current domain:', currentDomain);
-  console.log('🌐 Current origin:', currentOrigin);
-  console.log('🌐 Current pathname:', window.location.pathname);
+  console.log('?? Current domain:', currentDomain);
+  console.log('?? Current origin:', currentOrigin);
+  console.log('?? Current pathname:', window.location.pathname);
   
   // Log Firebase configuration for debugging
-  console.log(' Firebase Config:', {
+  console.log('?? Firebase Config:', {
     authDomain: firebaseConfig.authDomain,
     projectId: firebaseConfig.projectId,
     currentDomain: currentDomain,
     currentOrigin: currentOrigin
   });
   
-  // Additional debugging for OAuth issues
-  console.log('🔧 Google Provider Config:', {
-    scopes: googleProvider.getScopes(),
-    customParameters: googleProvider.getCustomParameters()
-  });
-  
   // Diagnostic information for troubleshooting
-  console.log('🔍 OAuth Diagnostic Info:', {
+  console.log('?? Firebase Diagnostic Info:', {
     userAgent: navigator.userAgent,
     protocol: window.location.protocol,
     host: window.location.host,
@@ -69,8 +48,7 @@ if (typeof window !== 'undefined') {
     port: window.location.port,
     pathname: window.location.pathname,
     search: window.location.search,
-    hash: window.location.hash,
-    expectedClientId: '96808245065-d8miorej2u41ukr07lmc3vvqs2h1fldj.apps.googleusercontent.com'
+    hash: window.location.hash
   });
 }
 
