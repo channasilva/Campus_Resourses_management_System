@@ -773,6 +773,20 @@ class FirebaseService {
     }
   }
 
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    try {
+      console.log('📖 Marking notification as read:', notificationId);
+      await updateDoc(doc(db, 'notifications', notificationId), {
+        isRead: true,
+        updatedAt: new Date().toISOString()
+      });
+      console.log('✅ Notification marked as read successfully');
+    } catch (error: any) {
+      console.error('Mark notification as read error:', error);
+      throw new Error(error.message);
+    }
+  }
+
   async deleteNotification(notificationId: string): Promise<void> {
     try {
       console.log('🗑️ Deleting notification:', notificationId);

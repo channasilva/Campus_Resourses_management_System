@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import Button from '../components/Button';
 import { firebaseService } from '../services/firebase-service';
+import { dashboardService } from '../services/dashboard-service';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { Resource, Booking, Notification } from '../types';
@@ -43,6 +44,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
 import { profileImageManager } from '../utils/profileImageManager';
 import ProfileImageUpload from '../components/ProfileImageUpload';
+import { checkAndInitializeData } from '../utils/initializeSampleData';
 
 import AddResourceModal from '../components/AddResourceModal';
 import EditResourceModal from '../components/EditResourceModal';
@@ -56,6 +58,8 @@ import UserCountCard from '../components/UserCountCard';
 import MaintenanceToggle from '../components/MaintenanceToggle';
 import DashboardAnalytics from '../components/DashboardAnalytics';
 import AdvancedAnalytics from '../components/AdvancedAnalytics';
+import DashboardTest from '../components/DashboardTest';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -81,31 +85,7 @@ const Dashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'booked' | 'maintenance'>('all');
 
-  // Direct Firebase data loading as fallback
-  const loadResourcesDirectly = async (): Promise<Resource[]> => {
-    try {
-      console.log('🔄 Loading resources directly from Firebase...');
-      const db = getFirestore();
-      const resourcesRef = collection(db, 'resources');
-      const snapshot = await getDocs(resourcesRef);
-      
-      if (snapshot.empty) {
-        console.log('📊 No resources found in Firestore');
-        return [];
-      }
-      
-      const resources = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Resource[];
-      
-      console.log(`✅ Direct Firebase: Successfully fetched ${resources.length} resources`);
-      return resources;
-    } catch (error) {
-      console.error('❌ Direct Firebase resource loading failed:', error);
-      return [];
-    }
-  };
+
 
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -182,7 +162,14 @@ const Dashboard: React.FC = () => {
         console.log('🆔 User ID:', currentUser.id, 'ID type:', typeof currentUser.id);
 
         setCurrentUser(currentUser);
-        await loadDashboardData(currentUser.id, currentUser.role);
+        
+        // Check and initialize sample data if needed
+        const dataInitialized = await checkAndInitializeData();
+        if (dataInitialized) {
+          console.log('✅ Sample data initialized successfully');
+        }
+        
+        await loadDashboardData(currentUser);
 
         // Load profile image from the manager system
         try {
@@ -205,178 +192,29 @@ const Dashboard: React.FC = () => {
     initializeDashboard();
   }, [navigate]);
 
-  const loadDashboardData = async (userId: string, userRole: string) => {
+  const loadDashboardData = async (user: UserType) => {
     try {
-      console.log('🔄 Loading dashboard data for user:', userId, 'role:', userRole);
+      console.log('🔄 Loading dashboard data for user:', user.id, 'role:', user.role);
       
-      // Initialize with empty arrays
-      let resourcesData: Resource[] = [];
-      let bookingsData: Booking[] = [];
-      let notificationsData: Notification[] = [];
-      let userCount = 0;
+      const dashboardData = await dashboardService.loadDashboardData(user);
       
-      // Load resources (always needed) - with retry mechanism
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      while (retryCount < maxRetries) {
-        try {
-          console.log(`📚 Loading resources... (attempt ${retryCount + 1}/${maxRetries})`);
-          console.log('🔍 Calling firebaseService.getResources()...');
-          
-          // Add timeout to prevent hanging
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Resource loading timeout')), 10000)
-          );
-          
-          // Try service first, then direct Firebase as fallback
-          try {
-            resourcesData = await firebaseService.getResources();
-          } catch (serviceError) {
-            console.warn('⚠️ Service method failed, trying direct Firebase:', serviceError);
-            resourcesData = await loadResourcesDirectly();
-          }
-          
-          console.log('✅ Resources loaded:', resourcesData.length);
-          console.log('📋 Resources data:', resourcesData);
-          if (resourcesData.length > 0) {
-            console.log('🎯 First resource:', resourcesData[0]);
-          }
-          break; // Success, exit retry loop
-          
-        } catch (error) {
-          retryCount++;
-          console.error(`❌ Error loading resources (attempt ${retryCount}):`, error);
-          console.error('❌ Error details:', error.message, error.stack);
-          
-          if (retryCount >= maxRetries) {
-            console.error('❌ Max retries reached for resource loading');
-            toast.error('Failed to load resources after multiple attempts.');
-            resourcesData = [];
-          } else {
-            console.log(`⏳ Retrying resource loading in 1 second...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
-      }
-      
-      // Load notifications based on user role
-      try {
-        if (userRole.toLowerCase() === 'admin') {
-          console.log('🔔 Loading all notifications for admin...');
-          notificationsData = await firebaseService.getAllNotifications();
-          console.log('✅ Notifications loaded:', notificationsData.length);
-          
-          // Fetch total user count for admin
-          console.log('👥 Loading user count for admin...');
-          const users = await firebaseService.getAllUsers();
-          userCount = users.length;
-          console.log('✅ User count loaded:', userCount);
-        } else {
-          console.log('🔔 Loading user notifications...');
-          try {
-            // Direct Firebase approach to avoid service method issues
-            console.log('🔄 Using direct Firebase for notifications...');
-            const db = getFirestore();
-            const notificationsRef = collection(db, 'notifications');
-            const snapshot = await getDocs(notificationsRef);
-            
-            if (snapshot.empty) {
-              console.log('📊 No notifications found in Firestore');
-              notificationsData = [];
-            } else {
-              const allNotifications = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              })) as Notification[];
-              
-              // Filter for user-specific and system notifications
-              notificationsData = allNotifications.filter(notification => 
-                notification.userId === userId || notification.isSystemNotification
-              );
-              
-              // Sort by creation date
-              notificationsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-              
-              console.log(`✅ Direct Firebase: Successfully fetched ${notificationsData.length} user notifications`);
-            }
-          } catch (error) {
-            console.error('❌ Direct Firebase notification loading failed:', error);
-            notificationsData = [];
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error loading notifications:', error);
-        toast.error('Failed to load notifications. Using empty list.');
-        notificationsData = [];
-      }
-
-      // Load bookings based on user role
-      try {
-        if (userRole.toLowerCase() === 'admin') {
-          console.log('👑 Loading all bookings for admin...');
-          bookingsData = await firebaseService.getAllBookings();
-          console.log('✅ All bookings loaded:', bookingsData.length);
-        } else {
-          console.log('👤 Loading user bookings...');
-          try {
-            // Direct Firebase approach to avoid service method issues
-            console.log('🔄 Using direct Firebase for bookings...');
-            const db = getFirestore();
-            const bookingsRef = collection(db, 'bookings');
-            const snapshot = await getDocs(bookingsRef);
-            
-            if (snapshot.empty) {
-              console.log('📊 No bookings found in Firestore');
-              bookingsData = [];
-            } else {
-              const allBookings = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              })) as Booking[];
-              
-              // Filter for user-specific bookings
-              bookingsData = allBookings.filter(booking => booking.userId === userId);
-              
-              // Sort by creation date
-              bookingsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-              
-              console.log(`✅ Direct Firebase: Successfully fetched ${bookingsData.length} user bookings`);
-            }
-          } catch (error) {
-            console.error('❌ Direct Firebase booking loading failed:', error);
-            bookingsData = [];
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error loading bookings:', error);
-        toast.error('Failed to load bookings. Using empty list.');
-        bookingsData = [];
-      }
-
-      console.log('📊 Dashboard data loaded successfully:', {
-        resources: resourcesData.length,
-        bookings: bookingsData.length,
-        notifications: notificationsData.length,
-        userCount: userCount,
-        userRole: userRole
-      });
-
-      setResources(resourcesData);
-      setBookings(bookingsData);
-      setNotifications(notificationsData);
-      setUserCount(userCount);
+      setResources(dashboardData.resources);
+      setBookings(dashboardData.bookings);
+      setNotifications(dashboardData.notifications);
+      setUserCount(dashboardData.userCount);
       
       // Show success message based on what we loaded
-      if (resourcesData.length > 0) {
-        toast.success(`Dashboard loaded successfully! Found ${resourcesData.length} resources.`);
-      } else if (bookingsData.length > 0 || notificationsData.length > 0) {
+      if (dashboardData.error) {
+        toast.error(dashboardData.error);
+      } else if (dashboardData.resources.length > 0) {
+        toast.success(`Dashboard loaded successfully! Found ${dashboardData.resources.length} resources.`);
+      } else if (dashboardData.bookings.length > 0 || dashboardData.notifications.length > 0) {
         toast.success('Dashboard loaded successfully!');
       } else {
         toast.info('Dashboard loaded. No data found - this is normal for a new system.');
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Critical error loading dashboard data:', error);
       toast.error(`Critical error: ${error.message || 'Failed to load dashboard data.'}`);
       
@@ -405,7 +243,7 @@ const Dashboard: React.FC = () => {
   const handleResourceAdded = async () => {
     // Refresh resources list
     try {
-      const updatedResources = await firebaseService.getResources();
+      const updatedResources = await dashboardService.refreshResources();
       setResources(updatedResources);
     } catch (error) {
       console.error('Error refreshing resources:', error);
@@ -415,7 +253,7 @@ const Dashboard: React.FC = () => {
   const handleResourceUpdated = async () => {
     // Refresh resources list
     try {
-      const updatedResources = await firebaseService.getResources();
+      const updatedResources = await dashboardService.refreshResources();
       setResources(updatedResources);
     } catch (error) {
       console.error('Error refreshing resources:', error);
@@ -433,7 +271,7 @@ const Dashboard: React.FC = () => {
         await firebaseService.deleteResource(resourceId);
         toast.success('Resource deleted successfully!');
         // Refresh resources list
-        const updatedResources = await firebaseService.getResources();
+        const updatedResources = await dashboardService.refreshResources();
         setResources(updatedResources);
       } catch (error) {
         console.error('Error deleting resource:', error);
@@ -460,17 +298,10 @@ const Dashboard: React.FC = () => {
         console.log('🔄 Refreshing bookings and resources for user:', currentUser.id);
         
         // Load bookings based on user role
-        let updatedBookings: Booking[] = [];
-        if (currentUser.role?.toLowerCase() === 'admin') {
-          console.log('👑 Refreshing all bookings for admin');
-          updatedBookings = await firebaseService.getAllBookings();
-        } else {
-          console.log('👤 Refreshing user bookings for:', currentUser.role);
-          updatedBookings = await firebaseService.getBookingsByUser(currentUser.id);
-        }
+        const updatedBookings = await dashboardService.refreshBookings(currentUser);
         
         // Also refresh resources to update availability status
-        const updatedResources = await firebaseService.getResources();
+        const updatedResources = await dashboardService.refreshResources();
         
         console.log('📋 Updated bookings:', updatedBookings);
         console.log('🏢 Updated resources:', updatedResources.length);
@@ -494,13 +325,8 @@ const Dashboard: React.FC = () => {
     // Refresh bookings list
     if (currentUser) {
       try {
-        if (currentUser.role?.toLowerCase() === 'admin') {
-          const updatedBookings = await firebaseService.getAllBookings();
+        const updatedBookings = await dashboardService.refreshBookings(currentUser);
           setBookings(updatedBookings);
-        } else {
-          const updatedBookings = await firebaseService.getBookingsByUser(currentUser.id);
-          setBookings(updatedBookings);
-        }
       } catch (error) {
         console.error('Error refreshing bookings:', error);
       }
@@ -541,7 +367,7 @@ const Dashboard: React.FC = () => {
     // Refresh notifications list
     if (currentUser) {
       try {
-        const updatedNotifications = await firebaseService.getNotificationsByUser(currentUser.id);
+        const updatedNotifications = await dashboardService.refreshNotifications(currentUser);
         setNotifications(updatedNotifications);
       } catch (error) {
         console.error('Error refreshing notifications:', error);
@@ -572,7 +398,7 @@ const Dashboard: React.FC = () => {
     if (currentUser) {
       try {
         console.log('🔄 Manual refresh of bookings for user:', currentUser.id);
-        await loadDashboardData(currentUser.id, currentUser.role);
+        await loadDashboardData(currentUser);
         toast.success('Bookings refreshed!');
       } catch (error) {
         console.error('Error refreshing bookings:', error);
@@ -657,6 +483,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-primary-50/30 dark:from-secondary-950 dark:via-secondary-900 dark:to-primary-950/30 transition-all duration-500">
       <Toaster
         position="top-center"
@@ -1055,6 +882,13 @@ const Dashboard: React.FC = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Dashboard Test Component (Development Only) */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mb-8">
+                  <DashboardTest user={currentUser} />
+                </div>
+              )}
 
               {/* Enhanced Recent Activity */}
               <div className="space-y-6">
@@ -1720,6 +1554,7 @@ const Dashboard: React.FC = () => {
         onProfileUpdated={handleProfileUpdated}
       />
     </div>
+    </ErrorBoundary>
   );
 };
 
