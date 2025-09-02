@@ -195,7 +195,7 @@ class FirebaseService {
           username: displayName,
           email: firebaseUser.email!,
           role: 'student', // Default role for Google sign-in users
-          department: 'General', // Provide default department instead of undefined
+          department: 'General', // Default value instead of undefined
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           lastLogin: new Date().toISOString()
