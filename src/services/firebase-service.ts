@@ -1,9 +1,11 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
-  UserCredential
+  UserCredential,
+  GoogleAuthProvider
 } from 'firebase/auth';
 import { 
   doc, 
@@ -26,6 +28,9 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { auth, db, storage } from '../config/firebase';
+
+// Initialize Google Auth Provider
+const googleProvider = new GoogleAuthProvider();
 import {
   User,
   Resource,
@@ -149,6 +154,8 @@ class FirebaseService {
         throw new Error('Too many failed login attempts. Please try again later.');
       } else if (error.code === 'auth/network-request-failed') {
         throw new Error('Network error. Please check your internet connection and try again.');
+      } else if (error.code === 'auth/invalid-credential') {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
       } else {
         throw new Error(error.message || 'Login failed. Please check your credentials and try again.');
       }
@@ -231,6 +238,79 @@ class FirebaseService {
     } catch (error) {
       console.error('? Error fetching users:', error);
       throw new Error('Failed to fetch users');
+    }
+  }
+
+  async signInWithGoogle(): Promise<{ user: User; token: string }> {
+    try {
+      console.log('🚀 Starting Google Sign-In process...');
+      console.log('🌐 Current URL:', window.location.href);
+      console.log('🌐 Current origin:', window.location.origin);
+      
+      // Configure Google provider with additional settings for better compatibility
+      googleProvider.setCustomParameters({
+        prompt: 'select_account',
+        access_type: 'online'
+      });
+      
+      console.log('🔧 Google provider configured with parameters');
+      
+      // Sign in with Google popup
+      console.log('🔐 Attempting Google Sign-In popup...');
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseUser = result.user;
+      
+      console.log('✅ Google Sign-In successful:', firebaseUser.email);
+      console.log('🔍 Firebase User UID:', firebaseUser.uid);
+      
+      // Check if user exists in our Firestore database
+      console.log('🔍 Checking if user exists in Firestore...');
+      let existingUser = await this.getUserByEmail(firebaseUser.email!);
+      
+      if (!existingUser) {
+        // Create new user in Firestore for Google Sign-In
+        console.log('👤 Creating new user profile for Google Sign-In...');
+        const newUser: User = {
+          id: firebaseUser.uid,
+          username: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
+          email: firebaseUser.email!,
+          role: 'student', // Default role for Google sign-ins
+          department: 'General',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        };
+        
+        await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+        console.log('✅ New user profile created successfully!');
+        existingUser = newUser;
+      } else {
+        // Update last login for existing user
+        console.log('✅ User found in system:', existingUser.username);
+        await updateDoc(doc(db, 'users', firebaseUser.uid), {
+          lastLogin: new Date().toISOString()
+        });
+      }
+      
+      const token = await firebaseUser.getIdToken();
+      console.log('🎉 Google Sign-In completed successfully!');
+      
+      return { user: existingUser, token };
+    } catch (error: any) {
+      console.error('❌ Google Sign-In error:', error);
+      
+      // Handle specific Google Sign-In errors
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Google Sign-In was cancelled. Please try again.');
+      } else if (error.code === 'auth/popup-blocked') {
+        throw new Error('Popup was blocked by your browser. Please allow popups and try again.');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        throw new Error('This domain is not authorized for Google Sign-In. Please contact support.');
+      } else {
+        throw new Error(error.message || 'Google Sign-In failed. Please try again.');
+      }
     }
   }
 
