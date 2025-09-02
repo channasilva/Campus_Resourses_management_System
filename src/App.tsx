@@ -14,9 +14,43 @@ function App() {
     console.log('🚀 Initializing profile image system...');
     profileImageUploader.initialize();
     
+    // Global error boundary for third-party script errors
+    const handleGlobalError = (event: ErrorEvent) => {
+      if (event.filename && (event.filename.includes('ma_payload.js') || 
+          event.filename.includes('facebook') || 
+          event.filename.includes('fb') ||
+          event.error?.message?.includes('getAttribute') ||
+          event.error?.message?.includes('Cannot read properties of null'))) {
+        console.warn('🚫 Global: Third-party script error blocked:', {
+          filename: event.filename,
+          error: event.error?.message,
+          line: event.lineno,
+          column: event.colno
+        });
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+      }
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason?.message?.includes('getAttribute') || 
+          event.reason?.message?.includes('Cannot read properties of null') ||
+          event.reason?.message?.includes('querySelector')) {
+        console.warn('🚫 Global: Third-party script promise rejection blocked:', event.reason);
+        event.preventDefault();
+        return false;
+      }
+    };
+
+    window.addEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
     // Cleanup on unmount
     return () => {
       profileImageUploader.cleanup();
+      window.removeEventListener('error', handleGlobalError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
   }, []);
 

@@ -111,13 +111,32 @@ const Dashboard: React.FC = () => {
     const initializeDashboard = async () => {
       try {
         console.log('🔄 Initializing dashboard...');
-        console.log('🕒 Dashboard version: 2025-01-09-v4');
+        console.log('🕒 Dashboard version: 2025-01-09-v5');
         
-        // Add error boundary for third-party script errors
+        // Add comprehensive error boundary for third-party script errors
         window.addEventListener('error', (event) => {
-          if (event.filename && event.filename.includes('ma_payload.js')) {
-            console.warn('⚠️ Third-party script error detected, continuing with dashboard initialization:', event.error);
+          if (event.filename && (event.filename.includes('ma_payload.js') || 
+              event.filename.includes('facebook') || 
+              event.filename.includes('fb') ||
+              event.error?.message?.includes('getAttribute'))) {
+            console.warn('⚠️ Third-party script error detected, preventing dashboard crash:', {
+              filename: event.filename,
+              error: event.error?.message,
+              stack: event.error?.stack
+            });
             event.preventDefault();
+            event.stopPropagation();
+            return false;
+          }
+        });
+
+        // Also handle unhandled promise rejections from third-party scripts
+        window.addEventListener('unhandledrejection', (event) => {
+          if (event.reason?.message?.includes('getAttribute') || 
+              event.reason?.message?.includes('Cannot read properties of null')) {
+            console.warn('⚠️ Third-party script promise rejection detected, preventing dashboard crash:', event.reason);
+            event.preventDefault();
+            return false;
           }
         });
         
