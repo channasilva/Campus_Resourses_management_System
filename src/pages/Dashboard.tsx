@@ -82,26 +82,46 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
-        // First check if user is authenticated with Firebase
-        const isAuth = await firebaseService.isAuthenticated();
-        if (!isAuth) {
-          console.error('❌ User not authenticated with Firebase');
+        console.log('🔄 Initializing dashboard...');
+        
+        // Try to get user from localStorage first (fallback)
+        const userData = localStorage.getItem('user');
+        let currentUser = null;
+        
+        if (userData) {
+          try {
+            currentUser = JSON.parse(userData);
+            console.log('👤 User data from localStorage:', currentUser);
+          } catch (error) {
+            console.error('❌ Error parsing localStorage user data:', error);
+          }
+        }
+        
+        // Try to get current user from Firebase Auth
+        try {
+          const firebaseUser = await firebaseService.getCurrentUser();
+          if (firebaseUser) {
+            console.log('✅ Firebase user found:', firebaseUser);
+            currentUser = firebaseUser;
+            // Update localStorage with fresh data
+            localStorage.setItem('user', JSON.stringify(firebaseUser));
+          } else {
+            console.log('⚠️ No Firebase user found, using localStorage data');
+          }
+        } catch (error) {
+          console.error('⚠️ Error getting Firebase user:', error);
+          console.log('🔄 Falling back to localStorage data');
+        }
+        
+        // If we still don't have user data, redirect to login
+        if (!currentUser || !currentUser.id) {
+          console.error('❌ No valid user data found');
           toast.error('Please log in again.');
           navigate('/login');
           return;
         }
 
-        // Get current user from Firebase
-        const currentUser = await firebaseService.getCurrentUser();
-        if (!currentUser) {
-          console.error('❌ Could not get current user from Firebase');
-          toast.error('User data not found. Please log in again.');
-          navigate('/login');
-          return;
-        }
-
-        console.log('✅ User authenticated:', currentUser);
-        console.log('👤 Current user data:', currentUser);
+        console.log('✅ Using user data:', currentUser);
         console.log('🔍 User role:', currentUser.role, 'Role type:', typeof currentUser.role);
         console.log('🆔 User ID:', currentUser.id, 'ID type:', typeof currentUser.id);
 

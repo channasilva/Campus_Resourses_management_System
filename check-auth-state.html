@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Firebase Auth State</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .result.info {
+            background-color: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        .instructions {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Check Firebase Auth State</h1>
+        
+        <div class="instructions">
+            <h3>📋 What This Tool Does:</h3>
+            <p>This tool checks the current Firebase Auth state and helps identify why the dashboard authentication checks might be failing.</p>
+        </div>
+        
+        <button onclick="checkAuthState()">🔍 Check Firebase Auth State</button>
+        <button onclick="checkLocalStorage()">💾 Check LocalStorage Data</button>
+        <button onclick="testDataAccess()">📊 Test Data Access</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, getDocs, collection } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.checkAuthState = async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Checking Firebase Auth state...\n\n';
+            
+            let result = '🔐 Firebase Auth State Check\n';
+            result += '==========================\n\n';
+            
+            try {
+                // Check current user
+                const currentUser = auth.currentUser;
+                result += `Current User: ${currentUser ? 'Authenticated' : 'Not Authenticated'}\n`;
+                
+                if (currentUser) {
+                    result += `User ID: ${currentUser.uid}\n`;
+                    result += `Email: ${currentUser.email}\n`;
+                    result += `Display Name: ${currentUser.displayName || 'None'}\n`;
+                    result += `Email Verified: ${currentUser.emailVerified}\n`;
+                    result += `Creation Time: ${new Date(currentUser.metadata.creationTime).toLocaleString()}\n`;
+                    result += `Last Sign In: ${new Date(currentUser.metadata.lastSignInTime).toLocaleString()}\n`;
+                } else {
+                    result += 'No authenticated user found.\n';
+                }
+                
+                result += '\n';
+                
+                // Check auth state listener
+                result += 'Auth State Listener Test:\n';
+                result += 'Setting up auth state listener...\n';
+                
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        result += `✅ Auth state changed: User authenticated (${user.email})\n`;
+                    } else {
+                        result += `❌ Auth state changed: User not authenticated\n`;
+                    }
+                    resultDiv.textContent = result;
+                });
+                
+                result += 'Auth state listener set up. Check console for changes.\n\n';
+                
+                // Test authentication methods
+                result += 'Testing Authentication Methods:\n';
+                result += `auth.currentUser !== null: ${auth.currentUser !== null}\n`;
+                result += `typeof auth.currentUser: ${typeof auth.currentUser}\n`;
+                
+                if (currentUser) {
+                    result += '✅ User is authenticated and can access Firestore\n';
+                } else {
+                    result += '❌ User is not authenticated - this is why dashboard fails\n';
+                }
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+                
+            } catch (error) {
+                console.error('❌ Auth state check failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Auth state check failed!\n\nError: ${error.message}\nCode: ${error.code}`;
+            }
+        };
+
+        window.checkLocalStorage = () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            
+            let result = '💾 LocalStorage Data Check\n';
+            result += '=========================\n\n';
+            
+            try {
+                const userData = localStorage.getItem('user');
+                const token = localStorage.getItem('token');
+                
+                result += `User Data in localStorage: ${userData ? 'Found' : 'Not Found'}\n`;
+                result += `Token in localStorage: ${token ? 'Found' : 'Not Found'}\n\n`;
+                
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    result += 'User Data Details:\n';
+                    result += `- ID: ${user.id || 'Missing'}\n`;
+                    result += `- Email: ${user.email || 'Missing'}\n`;
+                    result += `- Username: ${user.username || 'Missing'}\n`;
+                    result += `- Role: ${user.role || 'Missing'}\n`;
+                    result += `- Department: ${user.department || 'Missing'}\n`;
+                }
+                
+                if (token) {
+                    result += `\nToken: ${token.substring(0, 20)}...\n`;
+                }
+                
+                result += '\n';
+                result += 'Comparison with Firebase Auth:\n';
+                const currentUser = auth.currentUser;
+                if (currentUser && userData) {
+                    const user = JSON.parse(userData);
+                    result += `LocalStorage ID: ${user.id}\n`;
+                    result += `Firebase Auth ID: ${currentUser.uid}\n`;
+                    result += `IDs Match: ${user.id === currentUser.uid ? 'Yes' : 'No'}\n`;
+                } else {
+                    result += 'Cannot compare - missing data in one or both sources\n';
+                }
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+                
+            } catch (error) {
+                console.error('❌ LocalStorage check failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ LocalStorage check failed!\n\nError: ${error.message}`;
+            }
+        };
+
+        window.testDataAccess = async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing data access...\n\n';
+            
+            let result = '📊 Data Access Test\n';
+            result += '==================\n\n';
+            
+            try {
+                const currentUser = auth.currentUser;
+                result += `Current User: ${currentUser ? 'Authenticated' : 'Not Authenticated'}\n\n`;
+                
+                if (!currentUser) {
+                    result += '❌ Cannot test data access - user not authenticated\n';
+                    result += 'This is why the dashboard shows "Failed to load dashboard data"\n';
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = result;
+                    return;
+                }
+                
+                result += 'Testing Firestore access...\n';
+                
+                // Test users collection
+                try {
+                    const usersRef = collection(db, 'users');
+                    const usersSnapshot = await getDocs(usersRef);
+                    result += `✅ Users collection: ${usersSnapshot.docs.length} documents\n`;
+                } catch (error) {
+                    result += `❌ Users collection: ${error.message}\n`;
+                }
+                
+                // Test resources collection
+                try {
+                    const resourcesRef = collection(db, 'resources');
+                    const resourcesSnapshot = await getDocs(resourcesRef);
+                    result += `✅ Resources collection: ${resourcesSnapshot.docs.length} documents\n`;
+                } catch (error) {
+                    result += `❌ Resources collection: ${error.message}\n`;
+                }
+                
+                // Test bookings collection
+                try {
+                    const bookingsRef = collection(db, 'bookings');
+                    const bookingsSnapshot = await getDocs(bookingsRef);
+                    result += `✅ Bookings collection: ${bookingsSnapshot.docs.length} documents\n`;
+                } catch (error) {
+                    result += `❌ Bookings collection: ${error.message}\n`;
+                }
+                
+                // Test notifications collection
+                try {
+                    const notificationsRef = collection(db, 'notifications');
+                    const notificationsSnapshot = await getDocs(notificationsRef);
+                    result += `✅ Notifications collection: ${notificationsSnapshot.docs.length} documents\n`;
+                } catch (error) {
+                    result += `❌ Notifications collection: ${error.message}\n`;
+                }
+                
+                result += '\n';
+                result += '🎯 CONCLUSION:\n';
+                result += 'If all collections show 0 documents, the data might not exist yet.\n';
+                result += 'If collections show errors, there might be permission issues.\n';
+                result += 'If user is not authenticated, that explains the dashboard error.\n';
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+                
+            } catch (error) {
+                console.error('❌ Data access test failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Data access test failed!\n\nError: ${error.message}`;
+            }
+        };
+    </script>
+</body>
+</html>
