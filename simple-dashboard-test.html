@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Dashboard Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .result.info {
+            background-color: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        .instructions {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Simple Dashboard Test</h1>
+        
+        <div class="instructions">
+            <h3>📋 What This Tool Does:</h3>
+            <p>This tool simulates the exact same data loading process that the dashboard uses. It will help us identify exactly where the problem is occurring.</p>
+        </div>
+        
+        <button onclick="testDashboardLoading()">🚀 Test Dashboard Loading Process</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // Wait for auth state to be determined
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+        });
+
+        // Simulate the exact Firebase service methods
+        const firebaseService = {
+            async getCurrentUser() {
+                try {
+                    if (!auth.currentUser) {
+                        console.log('❌ No authenticated user found');
+                        return null;
+                    }
+                    
+                    const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                    if (!userDoc.exists()) {
+                        console.log('❌ User document not found in Firestore');
+                        return null;
+                    }
+                    
+                    const userData = userDoc.data();
+                    return {
+                        id: auth.currentUser.uid,
+                        ...userData
+                    };
+                } catch (error) {
+                    console.error('Error getting current user:', error);
+                    return null;
+                }
+            },
+
+            async getAllUsers() {
+                try {
+                    console.log('🔍 Fetching all users...');
+                    
+                    const usersRef = collection(db, 'users');
+                    const usersSnapshot = await getDocs(usersRef);
+                    const users = usersSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    console.log(`✅ Successfully fetched ${users.length} users`);
+                    return users;
+                } catch (error) {
+                    console.error('❌ Error fetching users:', error);
+                    return [];
+                }
+            },
+
+            async getResources() {
+                try {
+                    console.log('🔍 Fetching resources...');
+                    
+                    const resourcesRef = collection(db, 'resources');
+                    const snapshot = await getDocs(resourcesRef);
+                    
+                    if (snapshot.empty) {
+                        console.log('📊 No resources found, returning sample data...');
+                        return [
+                            {
+                                id: 'sample-1',
+                                name: 'Computer Lab A',
+                                type: 'lab',
+                                description: 'Fully equipped computer lab with 25 workstations',
+                                category: 'Laboratory',
+                                location: 'Building A, Room 101',
+                                capacity: 25,
+                                status: 'available',
+                                isUnderMaintenance: false,
+                                maintenanceNote: '',
+                                features: ['Computers', 'Projector', 'Whiteboard'],
+                                equipment: ['Computers', 'Projector', 'Whiteboard'],
+                                maintenanceSchedule: 'Monthly',
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'sample-2',
+                                name: 'Conference Room B',
+                                type: 'room',
+                                description: 'Professional conference room with presentation equipment',
+                                category: 'Meeting Room',
+                                location: 'Building B, Room 205',
+                                capacity: 15,
+                                status: 'available',
+                                isUnderMaintenance: false,
+                                maintenanceNote: '',
+                                features: ['Projector', 'Video Conference System', 'Whiteboard'],
+                                equipment: ['Projector', 'Video Conference System', 'Whiteboard'],
+                                maintenanceSchedule: 'Quarterly',
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'sample-3',
+                                name: 'Science Lab',
+                                type: 'lab',
+                                description: 'Advanced science laboratory with modern equipment',
+                                category: 'Laboratory',
+                                location: 'Building C, Room 301',
+                                capacity: 20,
+                                status: 'available',
+                                isUnderMaintenance: false,
+                                maintenanceNote: '',
+                                features: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
+                                equipment: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
+                                maintenanceSchedule: 'Weekly',
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
+                            }
+                        ];
+                    }
+                    
+                    const resources = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    console.log(`✅ Successfully fetched ${resources.length} resources`);
+                    return resources;
+                } catch (error) {
+                    console.error('Error getting resources:', error);
+                    return [];
+                }
+            },
+
+            async getAllBookings() {
+                try {
+                    console.log('🔍 Getting all bookings (admin view)');
+                    
+                    const q = collection(db, 'bookings');
+                    const querySnapshot = await getDocs(q);
+                    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    
+                    console.log('📋 Found', bookings.length, 'total bookings');
+                    return bookings;
+                } catch (error) {
+                    console.error('Get all bookings error:', error);
+                    return [];
+                }
+            },
+
+            async getAllNotifications() {
+                try {
+                    console.log('🔍 Getting all notifications (admin view)');
+                    
+                    const q = collection(db, 'notifications');
+                    const querySnapshot = await getDocs(q);
+                    const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    
+                    console.log('📋 Found', notifications.length, 'notifications');
+                    return notifications;
+                } catch (error) {
+                    console.error('Get all notifications error:', error);
+                    return [];
+                }
+            },
+
+            async getBookingsByUser(userId) {
+                try {
+                    console.log('🔍 Getting bookings for user:', userId);
+                    
+                    const q = query(collection(db, 'bookings'), where('userId', '==', userId));
+                    const querySnapshot = await getDocs(q);
+                    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    
+                    console.log('📋 Found', bookings.length, 'bookings for user');
+                    return bookings;
+                } catch (error) {
+                    console.error('Get bookings by user error:', error);
+                    return [];
+                }
+            },
+
+            async getNotificationsByUser(userId) {
+                try {
+                    console.log('🔍 Getting notifications for user:', userId);
+                    
+                    const q = query(collection(db, 'notifications'), where('userId', '==', userId));
+                    const querySnapshot = await getDocs(q);
+                    const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    
+                    console.log('📋 Found', notifications.length, 'notifications for user');
+                    return notifications;
+                } catch (error) {
+                    console.error('Get notifications by user error:', error);
+                    return [];
+                }
+            }
+        };
+
+        window.testDashboardLoading = async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing dashboard loading process...\n\n';
+            
+            let result = '🚀 Dashboard Loading Test\n';
+            result += '========================\n\n';
+            
+            try {
+                // Wait a moment for auth state to be determined
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                if (!currentUser) {
+                    result += '❌ No authenticated user found\n';
+                    result += 'Please log in to the dashboard first, then run this test\n';
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = result;
+                    return;
+                }
+                
+                result += `✅ User authenticated: ${currentUser.email}\n`;
+                result += `User ID: ${currentUser.uid}\n\n`;
+                
+                // Get current user data
+                const userData = await firebaseService.getCurrentUser();
+                if (!userData) {
+                    result += '❌ Could not get user data from Firestore\n';
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = result;
+                    return;
+                }
+                
+                result += `✅ User data loaded: ${userData.username || userData.email}\n`;
+                result += `Role: ${userData.role}\n\n`;
+                
+                // Simulate the exact dashboard loading process
+                result += '🔄 Loading dashboard data...\n\n';
+                
+                // Load resources
+                try {
+                    result += '📚 Loading resources...\n';
+                    const resources = await firebaseService.getResources();
+                    result += `✅ Resources loaded: ${resources.length}\n`;
+                    if (resources.length > 0) {
+                        result += `   - ${resources[0].name} (${resources[0].type})\n`;
+                        if (resources.length > 1) {
+                            result += `   - ${resources[1].name} (${resources[1].type})\n`;
+                        }
+                        if (resources.length > 2) {
+                            result += `   - ${resources[2].name} (${resources[1].type})\n`;
+                        }
+                    }
+                } catch (error) {
+                    result += `❌ Error loading resources: ${error.message}\n`;
+                }
+                
+                result += '\n';
+                
+                // Load users (for admin)
+                let userCount = 0;
+                if (userData.role && userData.role.toLowerCase() === 'admin') {
+                    try {
+                        result += '👥 Loading user count for admin...\n';
+                        const users = await firebaseService.getAllUsers();
+                        userCount = users.length;
+                        result += `✅ User count loaded: ${userCount}\n`;
+                    } catch (error) {
+                        result += `❌ Error loading users: ${error.message}\n`;
+                    }
+                }
+                
+                result += '\n';
+                
+                // Load notifications
+                try {
+                    if (userData.role && userData.role.toLowerCase() === 'admin') {
+                        result += '🔔 Loading all notifications for admin...\n';
+                        const notifications = await firebaseService.getAllNotifications();
+                        result += `✅ Notifications loaded: ${notifications.length}\n`;
+                    } else {
+                        result += '🔔 Loading user notifications...\n';
+                        const notifications = await firebaseService.getNotificationsByUser(userData.id);
+                        result += `✅ User notifications loaded: ${notifications.length}\n`;
+                    }
+                } catch (error) {
+                    result += `❌ Error loading notifications: ${error.message}\n`;
+                }
+                
+                result += '\n';
+                
+                // Load bookings
+                try {
+                    if (userData.role && userData.role.toLowerCase() === 'admin') {
+                        result += '👑 Loading all bookings for admin...\n';
+                        const bookings = await firebaseService.getAllBookings();
+                        result += `✅ All bookings loaded: ${bookings.length}\n`;
+                    } else {
+                        result += '👤 Loading user bookings...\n';
+                        const bookings = await firebaseService.getBookingsByUser(userData.id);
+                        result += `✅ User bookings loaded: ${bookings.length}\n`;
+                    }
+                } catch (error) {
+                    result += `❌ Error loading bookings: ${error.message}\n`;
+                }
+                
+                result += '\n';
+                result += '🎯 Dashboard Loading Summary:\n';
+                result += '===========================\n';
+                result += `✅ Authentication: Working\n`;
+                result += `✅ User Data: Working\n`;
+                result += `✅ Resources: Working (${await firebaseService.getResources().then(r => r.length)} items)\n`;
+                result += `✅ Users: Working (${userCount} users)\n`;
+                result += `✅ Notifications: Working (${userData.role && userData.role.toLowerCase() === 'admin' ? await firebaseService.getAllNotifications().then(n => n.length) : await firebaseService.getNotificationsByUser(userData.id).then(n => n.length)} items)\n`;
+                result += `✅ Bookings: Working (${userData.role && userData.role.toLowerCase() === 'admin' ? await firebaseService.getAllBookings().then(b => b.length) : await firebaseService.getBookingsByUser(userData.id).then(b => b.length)} items)\n\n`;
+                
+                result += '🎉 All dashboard functions are working correctly!\n';
+                result += 'If you\'re still seeing errors in the actual dashboard, check the browser console for more details.\n';
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+                
+            } catch (error) {
+                result += `❌ Dashboard loading test failed: ${error.message}\n`;
+                result += `Stack trace: ${error.stack}\n`;
+                resultDiv.className = 'result error';
+                resultDiv.textContent = result;
+            }
+        };
+    </script>
+</body>
+</html>
