@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Test User</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Test User</h1>
+        <p>This will create a test user in your Firebase system for testing login functionality.</p>
+        
+        <form id="userForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" value="testuser" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="test@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="testpassword123" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <select id="role" required>
+                    <option value="admin">Admin</option>
+                    <option value="lecturer">Lecturer</option>
+                    <option value="student" selected>Student</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="department">Department (optional):</label>
+                <input type="text" id="department" value="Computer Science">
+            </div>
+            
+            <button type="submit">Create Test User</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Handle form submission
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const submitButton = e.target.querySelector('button');
+            
+            // Get form data
+            const userData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value,
+                department: document.getElementById('department').value
+            };
+            
+            // Disable button and show loading
+            submitButton.disabled = true;
+            submitButton.textContent = 'Creating User...';
+            resultDiv.style.display = 'none';
+            
+            try {
+                console.log('🚀 Creating test user...', userData);
+                
+                // Create user in Firebase Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+                const user = userCredential.user;
+                
+                console.log('✅ Firebase Auth user created:', user.uid);
+                
+                // Create user profile in Firestore
+                const userProfile = {
+                    id: user.uid,
+                    username: userData.username,
+                    email: userData.email,
+                    role: userData.role,
+                    department: userData.department || null,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                await setDoc(doc(db, 'users', user.uid), userProfile);
+                console.log('✅ User profile stored in Firestore');
+                
+                // Show success message
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h3>✅ Test User Created Successfully!</h3>
+                    <p><strong>Email:</strong> ${userData.email}</p>
+                    <p><strong>Password:</strong> ${userData.password}</p>
+                    <p><strong>Username:</strong> ${userData.username}</p>
+                    <p><strong>Role:</strong> ${userData.role}</p>
+                    <p>You can now use these credentials to test login functionality.</p>
+                `;
+                resultDiv.style.display = 'block';
+                
+                // Reset form
+                document.getElementById('userForm').reset();
+                
+            } catch (error) {
+                console.error('❌ Error creating user:', error);
+                
+                // Show error message
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Error Creating User</h3>
+                    <p>${error.message}</p>
+                `;
+                resultDiv.style.display = 'block';
+            } finally {
+                // Re-enable button
+                submitButton.disabled = false;
+                submitButton.textContent = 'Create Test User';
+            }
+        });
+    </script>
+</body>
+</html>

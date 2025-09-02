@@ -178,9 +178,9 @@ class FirebaseService {
       
       console.log('✅ Google Sign-In successful:', firebaseUser.email);
       
-      // Check if user exists in our system by email
-      const existingUsers = await this.getAllUsers();
-      const existingUser = existingUsers.find(user => user.email === firebaseUser.email);
+      // Check if user exists in our system by email (efficient query)
+      console.log('🔍 Checking if user exists in system...');
+      const existingUser = await this.getUserByEmail(firebaseUser.email!);
       
       if (!existingUser) {
         // Sign out the user since they're not registered in our system
@@ -296,6 +296,29 @@ class FirebaseService {
     } catch (error: any) {
       console.error('Error checking user existence:', error);
       return false;
+    }
+  }
+
+  // Efficient method to get user by email
+  async getUserByEmail(email: string): Promise<User | null> {
+    try {
+      console.log('🔍 Searching for user with email:', email);
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email), limit(1));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        console.log('❌ No user found with email:', email);
+        return null;
+      }
+      
+      const userDoc = querySnapshot.docs[0];
+      const userData = { id: userDoc.id, ...userDoc.data() } as User;
+      console.log('✅ User found with email:', email, '- Username:', userData.username);
+      return userData;
+    } catch (error: any) {
+      console.error('❌ Error fetching user by email:', error);
+      return null;
     }
   }
 
