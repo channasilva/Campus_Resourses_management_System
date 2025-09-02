@@ -63,9 +63,9 @@ const LoginPage: React.FC = () => {
       navigate('/dashboard');
     } catch (error: any) {
       console.error('? Login failed:', error);
-      toast.error('Invalid email or password. Please try again.');
+      toast.error(error.message || "Login failed. Please try again.");
       setErrors({ 
-        email: 'Invalid email or password. Please try again.' 
+        email: error.message || "Invalid email or password. Please try again."
       });
     } finally {
       setIsLoading(false);

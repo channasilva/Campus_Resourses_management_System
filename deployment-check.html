@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deployment Check</title>
+</head>
+<body>
+    <h1>Deployment Status Check</h1>
+    <p>If you can see this page, the deployment is working.</p>
+    <p>Build timestamp: $(Get-Date)</p>
+    <script>
+        console.log("Deployment check loaded at:", new Date());
+        document.body.innerHTML += "<p>JavaScript is working. Current time: " + new Date().toLocaleString() + "</p>";
+        // Check if we can detect Google Sign-In buttons
+        setTimeout(function() {
+            const googleButtons = document.querySelectorAll("button[class*=google], button[data-provider=google], [class*=Google]");
+            if (googleButtons.length > 0) {
+                document.body.innerHTML += "<p style=\"color: red;\">WARNING: Found " + googleButtons.length + " Google Sign-In related elements!</p>";
+            } else {
+                document.body.innerHTML += "<p style=\"color: green;\">✓ No Google Sign-In buttons detected</p>";
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
