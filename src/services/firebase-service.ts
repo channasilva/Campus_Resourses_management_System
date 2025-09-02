@@ -752,7 +752,7 @@ class FirebaseService {
   }
 
   // Check for booking conflicts
-  async checkBookingConflicts(resourceId: string, startTime: string, endTime: string, excludeBookingId?: string): Promise<Booking[]> {
+  checkBookingConflicts = async (resourceId: string, startTime: string, endTime: string, excludeBookingId?: string): Promise<Booking[]> => {
     try {
       console.log('🔍 Checking booking conflicts for resource:', resourceId);
       console.log('🔍 Time range:', startTime, 'to', endTime);
@@ -935,7 +935,7 @@ export const firebaseServiceWithMethods = {
   createBooking: firebaseService.createBooking.bind(firebaseService),
   updateBooking: firebaseService.updateBooking.bind(firebaseService),
   deleteBooking: firebaseService.deleteBooking.bind(firebaseService),
-  checkBookingConflicts: firebaseService.checkBookingConflicts.bind(firebaseService),
+  checkBookingConflicts: firebaseService.checkBookingConflicts,
   approveBooking: firebaseService.approveBooking.bind(firebaseService),
   rejectBooking: firebaseService.rejectBooking.bind(firebaseService),
   
