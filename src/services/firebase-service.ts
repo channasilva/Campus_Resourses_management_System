@@ -4,7 +4,6 @@ import {
   signInWithPopup,
   signOut,
   updateProfile,
-  updatePassword,
   UserCredential
 } from 'firebase/auth';
 import { 
@@ -28,7 +27,6 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { auth, db, storage, googleProvider } from '../config/firebase';
-import { profileImageManager } from '../utils/profileImageManager';
 import {
   User,
   Resource,
@@ -42,26 +40,6 @@ import {
 } from '../types';
 
 class FirebaseService {
-  private createQuery<T>(
-    collectionRef: CollectionReference<DocumentData>,
-    conditions: { field: string; operator: '==' | '>' | '<' | '>=' | '<='; value: any }[] = [],
-    sortOptions: { field: string; direction: 'asc' | 'desc' }[] = []
-  ): Query<DocumentData> {
-    let q: Query<DocumentData> = collectionRef as Query<DocumentData>;
-
-    // Apply where conditions
-    conditions.forEach(({ field, operator, value }) => {
-      q = query(q, where(field, operator, value));
-    });
-
-    // Apply sort options
-    sortOptions.forEach(({ field, direction }) => {
-      q = query(q, orderBy(field, direction));
-    });
-
-    return q;
-  }
-
   // User Management
   async register(userData: {
     username: string;
@@ -72,6 +50,12 @@ class FirebaseService {
   }): Promise<{ user: User; token: string }> {
     try {
       console.log('🚀 Starting registration process...', { email: userData.email, username: userData.username });
+      
+      // Check if user already exists in Firestore
+      const existingUser = await this.getUserByEmail(userData.email);
+      if (existingUser) {
+        throw new Error('An account with this email already exists. Please sign in instead.');
+      }
       
       const userCredential: UserCredential = await createUserWithEmailAndPassword(
         auth,
@@ -102,54 +86,73 @@ class FirebaseService {
       return { user: userProfile, token };
     } catch (error: any) {
       console.error('❌ Registration error:', error);
-      throw new Error(error.message);
-    }
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    try {
-      console.log('🔄 Fetching all users...');
-      const usersRef = collection(db, 'users');
-      const usersSnapshot = await getDocs(usersRef);
-      const users = usersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as User));
-      console.log(`✅ Successfully fetched ${users.length} users`);
-      return users;
-    } catch (error) {
-      console.error('❌ Error fetching users:', error);
-      throw new Error('Failed to fetch users');
+      
+      // Handle specific Firebase Auth errors
+      if (error.code === 'auth/email-already-in-use') {
+        throw new Error('An account with this email already exists. Please sign in instead.');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Please enter a valid email address.');
+      } else if (error.code === 'auth/weak-password') {
+        throw new Error('Password should be at least 6 characters long.');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.message || 'Registration failed. Please try again.');
+      }
     }
   }
 
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
     try {
+      console.log('🚀 Starting email/password login...', { email });
+      
       const userCredential: UserCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
 
-      const user = userCredential.user;
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const firebaseUser = userCredential.user;
+      console.log('✅ Firebase Auth login successful:', firebaseUser.uid);
+      
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (!userDoc.exists()) {
-        throw new Error('User data not found');
+        console.error('❌ User document not found in Firestore for:', firebaseUser.uid);
+        throw new Error('User profile not found. Please contact support.');
       }
 
       const userData = userDoc.data() as User;
-      const token = await user.getIdToken();
+      console.log('✅ User profile found:', userData.username);
+      
+      const token = await firebaseUser.getIdToken();
 
       // Update last login
-      await updateDoc(doc(db, 'users', user.uid), {
+      await updateDoc(doc(db, 'users', firebaseUser.uid), {
         lastLogin: new Date().toISOString()
       });
 
+      console.log('🎉 Login completed successfully!');
       return { user: userData, token };
     } catch (error: any) {
-      console.error('Login error:', error);
-      throw new Error(error.message);
+      console.error('❌ Login error:', error);
+      
+      // Handle specific Firebase Auth errors
+      if (error.code === 'auth/user-not-found') {
+        throw new Error('No account found with this email. Please check your email or register first.');
+      } else if (error.code === 'auth/wrong-password') {
+        throw new Error('Incorrect password. Please try again.');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Please enter a valid email address.');
+      } else if (error.code === 'auth/user-disabled') {
+        throw new Error('This account has been disabled. Please contact support.');
+      } else if (error.code === 'auth/too-many-requests') {
+        throw new Error('Too many failed login attempts. Please try again later.');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.message || 'Login failed. Please check your credentials and try again.');
+      }
     }
   }
 
@@ -165,11 +168,7 @@ class FirebaseService {
         access_type: 'online'
       });
       
-      // Add additional scopes for better user data access
-      googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
-      googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-      
-      console.log('🔧 Google provider configured with scopes and parameters');
+      console.log('🔧 Google provider configured with parameters');
       
       // Sign in with Google popup
       console.log('🔐 Attempting Google Sign-In popup...');
@@ -177,52 +176,60 @@ class FirebaseService {
       const firebaseUser = result.user;
       
       console.log('✅ Google Sign-In successful:', firebaseUser.email);
+      console.log('🔍 Firebase User UID:', firebaseUser.uid);
       
-      // Check if user exists in our system by email (efficient query)
-      console.log('🔍 Checking if user exists in system...');
-      const existingUser = await this.getUserByEmail(firebaseUser.email!);
+      // Check if user exists in our Firestore database
+      console.log('🔍 Checking if user exists in Firestore...');
+      let existingUser = await this.getUserByEmail(firebaseUser.email!);
       
       if (!existingUser) {
-        // Sign out the user since they're not registered in our system
-        await signOut(auth);
-        throw new Error('This Google account is not registered in our system. Please register first or contact an administrator.');
-      }
-      
-      console.log('✅ User found in system:', existingUser.username);
-      
-      // Update the existing user's profile with Google data if needed
-      const updateData: any = {
-        lastLogin: new Date().toISOString()
-      };
-      
-      // Handle Google profile picture using profile image manager
-      if (firebaseUser.photoURL) {
-        console.log('📸 Processing Google profile picture:', firebaseUser.photoURL);
-        try {
-          const profileImageUrl = await profileImageManager.updateFromGoogleIfNeeded(
-            existingUser.id,
-            firebaseUser.photoURL
-          );
-          if (profileImageUrl) {
-            updateData.profilePicture = profileImageUrl;
-          }
-        } catch (error) {
-          console.error('❌ Failed to process Google profile picture:', error);
-          // Continue without profile picture update
+        // Create new user in Firestore for Google Sign-In
+        console.log('📝 Creating new user profile for Google user...');
+        
+        // Extract name from Google profile
+        const displayName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
+        
+        const userProfile: User = {
+          id: firebaseUser.uid,
+          username: displayName,
+          email: firebaseUser.email!,
+          role: 'student', // Default role for Google sign-in users
+          department: undefined,
+          profilePicture: firebaseUser.photoURL || undefined,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        };
+
+        await setDoc(doc(db, 'users', firebaseUser.uid), userProfile);
+        console.log('✅ New user profile created in Firestore!');
+        
+        existingUser = userProfile;
+      } else {
+        console.log('✅ Existing user found in system:', existingUser.username);
+        
+        // Update the existing user's profile with Google data if needed
+        const updateData: any = {
+          lastLogin: new Date().toISOString()
+        };
+        
+        // Update profile picture if available
+        if (firebaseUser.photoURL && !existingUser.profilePicture) {
+          updateData.profilePicture = firebaseUser.photoURL;
         }
+        
+        // Update user document in Firestore
+        await updateDoc(doc(db, 'users', existingUser.id), updateData);
+        
+        // Get updated user data
+        const updatedUserDoc = await getDoc(doc(db, 'users', existingUser.id));
+        existingUser = updatedUserDoc.data() as User;
       }
-      
-      // Update user document in Firestore
-      await updateDoc(doc(db, 'users', existingUser.id), updateData);
-      
-      // Get updated user data
-      const updatedUserDoc = await getDoc(doc(db, 'users', existingUser.id));
-      const userData = updatedUserDoc.data() as User;
       
       const token = await firebaseUser.getIdToken();
       
       console.log('🎉 Google Sign-In completed successfully!');
-      return { user: userData, token };
+      return { user: existingUser, token };
       
     } catch (error: any) {
       console.error('❌ Google Sign-In error:', error);
@@ -235,13 +242,11 @@ class FirebaseService {
       } else if (error.code === 'auth/popup-blocked') {
         throw new Error('Pop-up was blocked by your browser. Please allow pop-ups for this site and try again.');
       } else if (error.code === 'auth/unauthorized-domain') {
-        throw new Error('This domain is not authorized for Google Sign-In. The administrator needs to add this domain to Firebase Console.');
+        throw new Error('This domain is not authorized for Google Sign-In. Please contact the administrator.');
       } else if (error.code === 'auth/operation-not-allowed') {
-        throw new Error('Google Sign-In is not enabled in Firebase Console. Please contact the administrator.');
+        throw new Error('Google Sign-In is not enabled. Please contact the administrator.');
       } else if (error.code === 'auth/cancelled-popup-request') {
         throw new Error('Another sign-in popup is already open. Please close it and try again.');
-      } else if (error.message.includes('not registered in our system')) {
-        throw error; // Re-throw our custom error
       } else if (error.code === 'auth/network-request-failed') {
         throw new Error('Network error. Please check your internet connection and try again.');
       } else if (error.code === 'auth/internal-error') {
@@ -253,7 +258,7 @@ class FirebaseService {
       } else {
         // Provide more detailed error for debugging
         const errorMsg = error.code ?
-          `Google Sign-In failed (${error.code}). Please try again or contact support.` :
+          `Google Sign-In failed (${error.code}): ${error.message}` :
           'Google Sign-In failed. Please try again.';
         throw new Error(errorMsg);
       }
@@ -266,6 +271,29 @@ class FirebaseService {
     } catch (error: any) {
       console.error('Logout error:', error);
       throw new Error(error.message);
+    }
+  }
+
+  // Efficient method to get user by email
+  async getUserByEmail(email: string): Promise<User | null> {
+    try {
+      console.log('🔍 Searching for user with email:', email);
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email), limit(1));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        console.log('❌ No user found with email:', email);
+        return null;
+      }
+      
+      const userDoc = querySnapshot.docs[0];
+      const userData = { id: userDoc.id, ...userDoc.data() } as User;
+      console.log('✅ User found with email:', email, '- Username:', userData.username);
+      return userData;
+    } catch (error: any) {
+      console.error('❌ Error fetching user by email:', error);
+      return null;
     }
   }
 
@@ -299,30 +327,28 @@ class FirebaseService {
     }
   }
 
-  // Efficient method to get user by email
-  async getUserByEmail(email: string): Promise<User | null> {
+  async getAllUsers(): Promise<User[]> {
     try {
-      console.log('🔍 Searching for user with email:', email);
+      console.log('🔄 Fetching all users...');
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', email), limit(1));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        console.log('❌ No user found with email:', email);
-        return null;
-      }
-      
-      const userDoc = querySnapshot.docs[0];
-      const userData = { id: userDoc.id, ...userDoc.data() } as User;
-      console.log('✅ User found with email:', email, '- Username:', userData.username);
-      return userData;
-    } catch (error: any) {
-      console.error('❌ Error fetching user by email:', error);
-      return null;
+      const usersSnapshot = await getDocs(usersRef);
+      const users = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as User));
+      console.log(`✅ Successfully fetched ${users.length} users`);
+      return users;
+    } catch (error) {
+      console.error('❌ Error fetching users:', error);
+      throw new Error('Failed to fetch users');
     }
   }
 
+  // Add other methods from the original service here...
+  // (Resource management, booking management, etc.)
+}
 
+export const firebaseService = new FirebaseService(); 
   async updateProfile(userId: string, data: ProfileUpdateData): Promise<void> {
     try {
       await updateDoc(doc(db, 'users', userId), {
@@ -1070,4 +1096,3 @@ class FirebaseService {
   }
 }
 
-export const firebaseService = new FirebaseService(); 
