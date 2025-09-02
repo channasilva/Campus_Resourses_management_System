@@ -189,17 +189,22 @@ class FirebaseService {
         // Extract name from Google profile
         const displayName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
         
-        const userProfile: User = {
+        // Create user profile with proper handling of undefined values
+        const userProfile: any = {
           id: firebaseUser.uid,
           username: displayName,
           email: firebaseUser.email!,
           role: 'student', // Default role for Google sign-in users
-          department: undefined,
-          profilePicture: firebaseUser.photoURL || undefined,
+          department: 'General', // Provide default department instead of undefined
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           lastLogin: new Date().toISOString()
         };
+
+        // Only add profilePicture if it exists
+        if (firebaseUser.photoURL) {
+          userProfile.profilePicture = firebaseUser.photoURL;
+        }
 
         await setDoc(doc(db, 'users', firebaseUser.uid), userProfile);
         console.log('✅ New user profile created in Firestore!');
