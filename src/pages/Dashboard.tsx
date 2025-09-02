@@ -130,44 +130,92 @@ const Dashboard: React.FC = () => {
     try {
       console.log('🔄 Loading dashboard data for user:', userId, 'role:', userRole);
       
-             // Load resources and notifications
-       let notificationsData: Notification[] = [];
-       if (userRole.toLowerCase() === 'admin') {
-         notificationsData = await firebaseService.getAllNotifications();
-         // Fetch total user count for admin
-         const users = await firebaseService.getAllUsers();
-         setUserCount(users.length);
-       } else {
-         notificationsData = await firebaseService.getNotificationsByUser(userId);
-       }
-       
-       const [resourcesData] = await Promise.all([
-         firebaseService.getResources()
-       ]);
-
-      // Load bookings based on user role
+      // Initialize with empty arrays
+      let resourcesData: Resource[] = [];
       let bookingsData: Booking[] = [];
-      if (userRole.toLowerCase() === 'admin') {
-        console.log('👑 Loading all bookings for admin');
-        bookingsData = await firebaseService.getAllBookings();
-      } else {
-        console.log('👤 Loading user bookings for:', userRole);
-        bookingsData = await firebaseService.getBookingsByUser(userId);
+      let notificationsData: Notification[] = [];
+      let userCount = 0;
+      
+      // Load resources (always needed)
+      try {
+        console.log('📚 Loading resources...');
+        resourcesData = await firebaseService.getResources();
+        console.log('✅ Resources loaded:', resourcesData.length);
+      } catch (error) {
+        console.error('❌ Error loading resources:', error);
+        toast.error('Failed to load resources. Using empty list.');
+        resourcesData = [];
+      }
+      
+      // Load notifications based on user role
+      try {
+        if (userRole.toLowerCase() === 'admin') {
+          console.log('🔔 Loading all notifications for admin...');
+          notificationsData = await firebaseService.getAllNotifications();
+          console.log('✅ Notifications loaded:', notificationsData.length);
+          
+          // Fetch total user count for admin
+          console.log('👥 Loading user count for admin...');
+          const users = await firebaseService.getAllUsers();
+          userCount = users.length;
+          console.log('✅ User count loaded:', userCount);
+        } else {
+          console.log('🔔 Loading user notifications...');
+          notificationsData = await firebaseService.getNotificationsByUser(userId);
+          console.log('✅ User notifications loaded:', notificationsData.length);
+        }
+      } catch (error) {
+        console.error('❌ Error loading notifications:', error);
+        toast.error('Failed to load notifications. Using empty list.');
+        notificationsData = [];
       }
 
-      console.log('📊 Dashboard data loaded:', {
+      // Load bookings based on user role
+      try {
+        if (userRole.toLowerCase() === 'admin') {
+          console.log('👑 Loading all bookings for admin...');
+          bookingsData = await firebaseService.getAllBookings();
+          console.log('✅ All bookings loaded:', bookingsData.length);
+        } else {
+          console.log('👤 Loading user bookings...');
+          bookingsData = await firebaseService.getBookingsByUser(userId);
+          console.log('✅ User bookings loaded:', bookingsData.length);
+        }
+      } catch (error) {
+        console.error('❌ Error loading bookings:', error);
+        toast.error('Failed to load bookings. Using empty list.');
+        bookingsData = [];
+      }
+
+      console.log('📊 Dashboard data loaded successfully:', {
         resources: resourcesData.length,
         bookings: bookingsData.length,
         notifications: notificationsData.length,
+        userCount: userCount,
         userRole: userRole
       });
 
       setResources(resourcesData);
       setBookings(bookingsData);
       setNotifications(notificationsData);
+      setUserCount(userCount);
+      
+      // Show success message if we loaded any data
+      if (resourcesData.length > 0 || bookingsData.length > 0 || notificationsData.length > 0) {
+        toast.success('Dashboard data loaded successfully!');
+      } else {
+        toast.info('Dashboard loaded. No data found - this is normal for a new system.');
+      }
+      
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      toast.error('Failed to load dashboard data.');
+      console.error('❌ Critical error loading dashboard data:', error);
+      toast.error(`Critical error: ${error.message || 'Failed to load dashboard data.'}`);
+      
+      // Set empty arrays as fallback
+      setResources([]);
+      setBookings([]);
+      setNotifications([]);
+      setUserCount(0);
     }
   };
 

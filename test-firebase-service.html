@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Firebase Service Methods</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .result.info {
+            background-color: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        .instructions {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Firebase Service Methods</h1>
+        
+        <div class="instructions">
+            <h3>📋 What This Tool Does:</h3>
+            <p>This tool tests the exact same Firebase service methods that the dashboard uses, but with better error handling to identify the specific issue.</p>
+        </div>
+        
+        <button onclick="testAllMethods()">🧪 Test All Firebase Service Methods</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Firebase Service Class (simplified version of the actual service)
+        class TestFirebaseService {
+            async getAllUsers() {
+                try {
+                    console.log('🔍 Fetching all users...');
+                    const usersRef = collection(db, 'users');
+                    const usersSnapshot = await getDocs(usersRef);
+                    const users = usersSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    console.log(`✅ Successfully fetched ${users.length} users`);
+                    return users;
+                } catch (error) {
+                    console.error('❌ Error fetching users:', error);
+                    throw new Error('Failed to fetch users');
+                }
+            }
+
+            async getResources() {
+                try {
+                    console.log('🔍 Fetching resources...');
+                    const resourcesRef = collection(db, 'resources');
+                    const snapshot = await getDocs(resourcesRef);
+                    
+                    if (snapshot.empty) {
+                        console.log('📊 No resources found, returning empty array');
+                        return [];
+                    }
+                    
+                    const resources = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    console.log(`✅ Successfully fetched ${resources.length} resources`);
+                    return resources;
+                } catch (error) {
+                    console.error('Error getting resources:', error);
+                    return [];
+                }
+            }
+
+            async getAllBookings() {
+                try {
+                    console.log('🔍 Getting all bookings (admin view)');
+                    const q = collection(db, 'bookings');
+                    const querySnapshot = await getDocs(q);
+                    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Sort by creation date (newest first)
+                    bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    
+                    console.log('📋 Found', bookings.length, 'total bookings');
+                    return bookings;
+                } catch (error) {
+                    console.error('Get all bookings error:', error);
+                    return [];
+                }
+            }
+
+            async getAllNotifications() {
+                try {
+                    console.log('🔍 Getting all notifications (admin view)');
+                    const q = collection(db, 'notifications');
+                    const querySnapshot = await getDocs(q);
+                    const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Sort by creation date (newest first)
+                    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    
+                    console.log('📋 Found', notifications.length, 'notifications');
+                    return notifications;
+                } catch (error) {
+                    console.error('Get all notifications error:', error);
+                    return [];
+                }
+            }
+        }
+
+        const testService = new TestFirebaseService();
+
+        window.testAllMethods = async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing all Firebase service methods...\n\n';
+            
+            let allResults = '🧪 Testing All Firebase Service Methods\n';
+            allResults += '=====================================\n\n';
+            
+            try {
+                // Test 1: getAllUsers
+                allResults += '1️⃣ Testing getAllUsers()...\n';
+                try {
+                    const users = await testService.getAllUsers();
+                    allResults += `✅ getAllUsers() - SUCCESS: Found ${users.length} users\n`;
+                    if (users.length > 0) {
+                        allResults += `   Sample user: ${users[0].username || 'No username'} (${users[0].email})\n`;
+                    }
+                } catch (error) {
+                    allResults += `❌ getAllUsers() - FAILED: ${error.message}\n`;
+                }
+                allResults += '\n';
+                
+                // Test 2: getResources
+                allResults += '2️⃣ Testing getResources()...\n';
+                try {
+                    const resources = await testService.getResources();
+                    allResults += `✅ getResources() - SUCCESS: Found ${resources.length} resources\n`;
+                    if (resources.length > 0) {
+                        allResults += `   Sample resource: ${resources[0].name} (${resources[0].type})\n`;
+                    } else {
+                        allResults += `   ℹ️ No resources found (this is normal for a new system)\n`;
+                    }
+                } catch (error) {
+                    allResults += `❌ getResources() - FAILED: ${error.message}\n`;
+                }
+                allResults += '\n';
+                
+                // Test 3: getAllBookings
+                allResults += '3️⃣ Testing getAllBookings()...\n';
+                try {
+                    const bookings = await testService.getAllBookings();
+                    allResults += `✅ getAllBookings() - SUCCESS: Found ${bookings.length} bookings\n`;
+                    if (bookings.length > 0) {
+                        allResults += `   Sample booking: ${bookings[0].resourceName || 'No resource name'} - Status: ${bookings[0].status}\n`;
+                    } else {
+                        allResults += `   ℹ️ No bookings found (this is normal for a new system)\n`;
+                    }
+                } catch (error) {
+                    allResults += `❌ getAllBookings() - FAILED: ${error.message}\n`;
+                }
+                allResults += '\n';
+                
+                // Test 4: getAllNotifications
+                allResults += '4️⃣ Testing getAllNotifications()...\n';
+                try {
+                    const notifications = await testService.getAllNotifications();
+                    allResults += `✅ getAllNotifications() - SUCCESS: Found ${notifications.length} notifications\n`;
+                    if (notifications.length > 0) {
+                        allResults += `   Sample notification: ${notifications[0].title || 'No title'}\n`;
+                    } else {
+                        allResults += `   ℹ️ No notifications found (this is normal for a new system)\n`;
+                    }
+                } catch (error) {
+                    allResults += `❌ getAllNotifications() - FAILED: ${error.message}\n`;
+                }
+                allResults += '\n';
+                
+                // Test 5: Simulate dashboard load
+                allResults += '5️⃣ Testing Complete Dashboard Load...\n';
+                try {
+                    const userId = 'test-admin-id';
+                    const userRole = 'admin';
+                    
+                    console.log('🔄 Loading dashboard data for user:', userId, 'role:', userRole);
+                    
+                    // Load notifications (admin)
+                    let notificationsData = [];
+                    if (userRole.toLowerCase() === 'admin') {
+                        notificationsData = await testService.getAllNotifications();
+                    }
+                    
+                    // Load users (admin)
+                    let userCount = 0;
+                    if (userRole.toLowerCase() === 'admin') {
+                        const users = await testService.getAllUsers();
+                        userCount = users.length;
+                    }
+                    
+                    // Load resources
+                    const resourcesData = await testService.getResources();
+                    
+                    // Load bookings (admin)
+                    let bookingsData = [];
+                    if (userRole.toLowerCase() === 'admin') {
+                        bookingsData = await testService.getAllBookings();
+                    }
+                    
+                    console.log('📊 Dashboard data loaded:', {
+                        resources: resourcesData.length,
+                        bookings: bookingsData.length,
+                        notifications: notificationsData.length,
+                        userRole: userRole,
+                        userCount: userCount
+                    });
+                    
+                    allResults += `✅ Complete Dashboard Load - SUCCESS!\n`;
+                    allResults += `   Resources: ${resourcesData.length}\n`;
+                    allResults += `   Bookings: ${bookingsData.length}\n`;
+                    allResults += `   Notifications: ${notificationsData.length}\n`;
+                    allResults += `   Users: ${userCount}\n`;
+                    allResults += `   User Role: ${userRole}\n`;
+                    
+                } catch (error) {
+                    allResults += `❌ Complete Dashboard Load - FAILED: ${error.message}\n`;
+                }
+                
+                allResults += '\n';
+                allResults += '🎯 CONCLUSION:\n';
+                allResults += '==============\n';
+                allResults += 'If all tests passed, the Firebase service methods are working correctly.\n';
+                allResults += 'The dashboard error might be due to:\n';
+                allResults += '- Authentication issues\n';
+                allResults += '- User role detection problems\n';
+                allResults += '- Error handling in the dashboard component\n';
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = allResults;
+                
+            } catch (error) {
+                console.error('❌ Test failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Test failed: ${error.message}`;
+            }
+        };
+    </script>
+</body>
+</html>

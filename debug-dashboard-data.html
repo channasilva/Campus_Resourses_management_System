@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Dashboard Data Loading</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #2563eb;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .result.info {
+            background-color: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        .instructions {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Dashboard Data Loading</h1>
+        
+        <div class="instructions">
+            <h3>📋 What This Tool Does:</h3>
+            <p>This tool will test each Firebase service method individually to identify which one is causing the "Failed to load dashboard data" error.</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 Test 1: Firebase Connection</h3>
+            <button onclick="testFirebaseConnection()">Test Firebase Connection</button>
+            <div id="connectionResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>👥 Test 2: Get All Users (Admin)</h3>
+            <button onclick="testGetAllUsers()">Test getAllUsers()</button>
+            <div id="usersResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📚 Test 3: Get Resources</h3>
+            <button onclick="testGetResources()">Test getResources()</button>
+            <div id="resourcesResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📅 Test 4: Get All Bookings (Admin)</h3>
+            <button onclick="testGetAllBookings()">Test getAllBookings()</button>
+            <div id="bookingsResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔔 Test 5: Get All Notifications (Admin)</h3>
+            <button onclick="testGetAllNotifications()">Test getAllNotifications()</button>
+            <div id="notificationsResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚀 Test 6: Full Dashboard Data Load</h3>
+            <button onclick="testFullDashboardLoad()">Test Complete Dashboard Load</button>
+            <div id="dashboardResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Test Firebase Connection
+        window.testFirebaseConnection = async () => {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing Firebase connection...';
+            
+            try {
+                console.log('🔍 Testing Firebase connection...');
+                
+                // Test Firestore connection
+                const testRef = collection(db, 'users');
+                const snapshot = await getDocs(testRef);
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ Firebase connection successful!
+                
+Firestore Database: Connected
+Project ID: ${firebaseConfig.projectId}
+Auth Domain: ${firebaseConfig.authDomain}
+Users Collection: ${snapshot.docs.length} documents found
+
+Connection test passed!`;
+                
+            } catch (error) {
+                console.error('❌ Firebase connection failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Firebase connection failed!
+
+Error: ${error.message}
+Code: ${error.code}
+
+Possible issues:
+- Network connectivity
+- Firebase project configuration
+- Firestore security rules
+- Domain authorization`;
+            }
+        };
+
+        // Test Get All Users
+        window.testGetAllUsers = async () => {
+            const resultDiv = document.getElementById('usersResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing getAllUsers()...';
+            
+            try {
+                console.log('🔍 Testing getAllUsers()...');
+                
+                const usersRef = collection(db, 'users');
+                const usersSnapshot = await getDocs(usersRef);
+                const users = usersSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ getAllUsers() successful!
+
+Found ${users.length} users:
+${users.map(user => `- ${user.username || 'No username'} (${user.email}) - Role: ${user.role || 'No role'}`).join('\n')}`;
+                
+            } catch (error) {
+                console.error('❌ getAllUsers() failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ getAllUsers() failed!
+
+Error: ${error.message}
+Code: ${error.code}
+
+This method is called for admin users to get user count.`;
+            }
+        };
+
+        // Test Get Resources
+        window.testGetResources = async () => {
+            const resultDiv = document.getElementById('resourcesResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing getResources()...';
+            
+            try {
+                console.log('🔍 Testing getResources()...');
+                
+                const resourcesRef = collection(db, 'resources');
+                const snapshot = await getDocs(resourcesRef);
+                
+                if (snapshot.empty) {
+                    resultDiv.className = 'result info';
+                    resultDiv.textContent = `ℹ️ getResources() - No resources found
+
+The resources collection is empty. This is normal for a new system.
+The getResources() method should create sample data automatically.`;
+                } else {
+                    const resources = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ getResources() successful!
+
+Found ${resources.length} resources:
+${resources.map(resource => `- ${resource.name} (${resource.type}) - Status: ${resource.status}`).join('\n')}`;
+                }
+                
+            } catch (error) {
+                console.error('❌ getResources() failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ getResources() failed!
+
+Error: ${error.message}
+Code: ${error.code}
+
+This method is critical for dashboard functionality.`;
+            }
+        };
+
+        // Test Get All Bookings
+        window.testGetAllBookings = async () => {
+            const resultDiv = document.getElementById('bookingsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing getAllBookings()...';
+            
+            try {
+                console.log('🔍 Testing getAllBookings()...');
+                
+                const q = collection(db, 'bookings');
+                const querySnapshot = await getDocs(q);
+                const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ getAllBookings() successful!
+
+Found ${bookings.length} bookings:
+${bookings.length > 0 ? bookings.map(booking => `- ${booking.resourceName || 'No resource name'} - Status: ${booking.status || 'No status'} - User: ${booking.userName || 'No user name'}`).join('\n') : 'No bookings found (this is normal for a new system)'}`;
+                
+            } catch (error) {
+                console.error('❌ getAllBookings() failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ getAllBookings() failed!
+
+Error: ${error.message}
+Code: ${error.code}
+
+This method is called for admin users to get all bookings.`;
+            }
+        };
+
+        // Test Get All Notifications
+        window.testGetAllNotifications = async () => {
+            const resultDiv = document.getElementById('notificationsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing getAllNotifications()...';
+            
+            try {
+                console.log('🔍 Testing getAllNotifications()...');
+                
+                const q = collection(db, 'notifications');
+                const querySnapshot = await getDocs(q);
+                const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ getAllNotifications() successful!
+
+Found ${notifications.length} notifications:
+${notifications.length > 0 ? notifications.map(notification => `- ${notification.title || 'No title'} - Type: ${notification.type || 'No type'}`).join('\n') : 'No notifications found (this is normal for a new system)'}`;
+                
+            } catch (error) {
+                console.error('❌ getAllNotifications() failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ getAllNotifications() failed!
+
+Error: ${error.message}
+Code: ${error.code}
+
+This method is called for admin users to get all notifications.`;
+            }
+        };
+
+        // Test Full Dashboard Load
+        window.testFullDashboardLoad = async () => {
+            const resultDiv = document.getElementById('dashboardResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing complete dashboard data load...';
+            
+            try {
+                console.log('🔍 Testing complete dashboard data load...');
+                
+                // Simulate the exact same process as the dashboard
+                const userId = 'test-admin-id';
+                const userRole = 'admin';
+                
+                console.log('🔄 Loading dashboard data for user:', userId, 'role:', userRole);
+                
+                // Load notifications (admin)
+                let notificationsData = [];
+                if (userRole.toLowerCase() === 'admin') {
+                    const q = collection(db, 'notifications');
+                    const querySnapshot = await getDocs(q);
+                    notificationsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+                
+                // Load users (admin)
+                let userCount = 0;
+                if (userRole.toLowerCase() === 'admin') {
+                    const usersRef = collection(db, 'users');
+                    const usersSnapshot = await getDocs(usersRef);
+                    userCount = usersSnapshot.docs.length;
+                }
+                
+                // Load resources
+                const resourcesRef = collection(db, 'resources');
+                const resourcesSnapshot = await getDocs(resourcesRef);
+                const resourcesData = resourcesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Load bookings (admin)
+                let bookingsData = [];
+                if (userRole.toLowerCase() === 'admin') {
+                    const bookingsQ = collection(db, 'bookings');
+                    const bookingsSnapshot = await getDocs(bookingsQ);
+                    bookingsData = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+                
+                console.log('📊 Dashboard data loaded:', {
+                    resources: resourcesData.length,
+                    bookings: bookingsData.length,
+                    notifications: notificationsData.length,
+                    userRole: userRole,
+                    userCount: userCount
+                });
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ Complete dashboard data load successful!
+
+Dashboard Data Summary:
+- Resources: ${resourcesData.length}
+- Bookings: ${bookingsData.length}
+- Notifications: ${notificationsData.length}
+- Users: ${userCount}
+- User Role: ${userRole}
+
+All methods executed successfully! The dashboard should work properly.`;
+                
+            } catch (error) {
+                console.error('❌ Complete dashboard data load failed:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Complete dashboard data load failed!
+
+Error: ${error.message}
+Code: ${error.code}
+
+This simulates the exact same process as the dashboard.
+The error above is what's causing the "Failed to load dashboard data" message.`;
+            }
+        };
+    </script>
+</body>
+</html>
