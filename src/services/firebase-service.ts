@@ -163,7 +163,7 @@ class FirebaseService {
       console.log('🌐 Current origin:', window.location.origin);
       console.log('🌐 Current hostname:', window.location.hostname);
       
-      // Enhanced Google provider configuration
+      // Enhanced Google provider configuration with explicit client ID
       googleProvider.setCustomParameters({
         prompt: 'select_account',
         access_type: 'online',
@@ -174,6 +174,10 @@ class FirebaseService {
       console.log(' Provider scopes:', googleProvider.getScopes());
       console.log('🔧 Provider custom params:', googleProvider.getCustomParameters());
       
+      // Try to get the current user first to check auth state
+      const currentUser = auth.currentUser;
+      console.log('👤 Current user:', currentUser ? currentUser.email : 'None');
+      
       // Sign in with Google popup
       console.log('🔐 Attempting Google Sign-In popup...');
       const result = await signInWithPopup(auth, googleProvider);
@@ -181,6 +185,7 @@ class FirebaseService {
       
       console.log('✅ Google Sign-In successful:', firebaseUser.email);
       console.log('🔍 Firebase User UID:', firebaseUser.uid);
+      console.log('🔍 Firebase User Provider Data:', firebaseUser.providerData);
       
       // Check if user exists in our Firestore database
       console.log('🔍 Checking if user exists in Firestore...');
@@ -244,6 +249,7 @@ class FirebaseService {
       console.error('❌ Google Sign-In error:', error);
       console.error('❌ Error code:', error.code);
       console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
       
       // Enhanced error handling for permission issues
       if (error.code === 'auth/popup-closed-by-user') {

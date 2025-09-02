@@ -59,6 +59,18 @@ if (typeof window !== 'undefined') {
     scopes: googleProvider.getScopes(),
     customParameters: googleProvider.getCustomParameters()
   });
+  
+  // Diagnostic information for troubleshooting
+  console.log('🔍 OAuth Diagnostic Info:', {
+    userAgent: navigator.userAgent,
+    protocol: window.location.protocol,
+    host: window.location.host,
+    hostname: window.location.hostname,
+    port: window.location.port,
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash
+  });
 }
 
 export default app;
