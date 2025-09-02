@@ -82,38 +82,41 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-          const user = JSON.parse(userData);
-          console.log('Current user role:', user.role);
-          console.log('👤 Current user data:', user);
-          console.log('🔍 User role:', user.role, 'Role type:', typeof user.role);
-          console.log('🆔 User ID:', user.id, 'ID type:', typeof user.id);
-
-          if (!user.id) {
-            console.error('❌ User ID not found in user data');
-            toast.error('User data is incomplete. Please log in again.');
-            navigate('/login');
-            return;
-          }
-
-          setCurrentUser(user);
-          await loadDashboardData(user.id, user.role);
-
-          // Load profile image from the manager system
-          try {
-            const savedImage = await profileImageManager.getProfileImage(user.id);
-            console.log('Profile image loaded:', savedImage ? 'found' : 'not found');
-            setProfileImage(savedImage);
-            
-          } catch (error) {
-            console.error('Error loading profile image:', error);
-            setProfileImage(null);
-          }
-        } else {
-          console.log('❌ No user data found in localStorage');
+        // First check if user is authenticated with Firebase
+        const isAuth = await firebaseService.isAuthenticated();
+        if (!isAuth) {
+          console.error('❌ User not authenticated with Firebase');
+          toast.error('Please log in again.');
           navigate('/login');
           return;
+        }
+
+        // Get current user from Firebase
+        const currentUser = await firebaseService.getCurrentUser();
+        if (!currentUser) {
+          console.error('❌ Could not get current user from Firebase');
+          toast.error('User data not found. Please log in again.');
+          navigate('/login');
+          return;
+        }
+
+        console.log('✅ User authenticated:', currentUser);
+        console.log('👤 Current user data:', currentUser);
+        console.log('🔍 User role:', currentUser.role, 'Role type:', typeof currentUser.role);
+        console.log('🆔 User ID:', currentUser.id, 'ID type:', typeof currentUser.id);
+
+        setCurrentUser(currentUser);
+        await loadDashboardData(currentUser.id, currentUser.role);
+
+        // Load profile image from the manager system
+        try {
+          const savedImage = await profileImageManager.getProfileImage(currentUser.id);
+          console.log('Profile image loaded:', savedImage ? 'found' : 'not found');
+          setProfileImage(savedImage);
+          
+        } catch (error) {
+          console.error('Error loading profile image:', error);
+          setProfileImage(null);
         }
       } catch (error) {
         console.error('❌ Error initializing dashboard:', error);

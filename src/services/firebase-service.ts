@@ -276,19 +276,59 @@ class FirebaseService {
     }
   }
 
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      if (!auth.currentUser) {
+        console.log('❌ No authenticated user found');
+        return null;
+      }
+      
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      if (!userDoc.exists()) {
+        console.log('❌ User document not found in Firestore');
+        return null;
+      }
+      
+      const userData = userDoc.data();
+      return {
+        id: auth.currentUser.uid,
+        ...userData
+      } as User;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+  }
+
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      return auth.currentUser !== null;
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      return false;
+    }
+  }
+
   async getAllUsers(): Promise<User[]> {
     try {
-      console.log('?? Fetching all users...');
+      console.log('🔍 Fetching all users...');
+      
+      // Check if user is authenticated
+      if (!auth.currentUser) {
+        console.error('❌ User not authenticated');
+        throw new Error('User not authenticated. Please log in again.');
+      }
+      
       const usersRef = collection(db, 'users');
       const usersSnapshot = await getDocs(usersRef);
       const users = usersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as User));
-      console.log(`? Successfully fetched ${users.length} users`);
+      console.log(`✅ Successfully fetched ${users.length} users`);
       return users;
     } catch (error) {
-      console.error('? Error fetching users:', error);
+      console.error('❌ Error fetching users:', error);
       throw new Error('Failed to fetch users');
     }
   }
@@ -392,6 +432,13 @@ class FirebaseService {
   async getResources(): Promise<Resource[]> {
     try {
       console.log('🔍 Fetching resources...');
+      
+      // Check if user is authenticated
+      if (!auth.currentUser) {
+        console.error('❌ User not authenticated');
+        throw new Error('User not authenticated. Please log in again.');
+      }
+      
       const resourcesRef = collection(db, 'resources');
       const snapshot = await getDocs(resourcesRef);
       
@@ -630,6 +677,13 @@ class FirebaseService {
   async getAllBookings(): Promise<Booking[]> {
     try {
       console.log('🔍 Getting all bookings (admin view)');
+      
+      // Check if user is authenticated
+      if (!auth.currentUser) {
+        console.error('❌ User not authenticated');
+        throw new Error('User not authenticated. Please log in again.');
+      }
+      
       const q = collection(db, 'bookings');
       const querySnapshot = await getDocs(q);
       const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
@@ -737,6 +791,13 @@ class FirebaseService {
   async getAllNotifications(): Promise<Notification[]> {
     try {
       console.log('🔍 Getting all notifications (admin view)');
+      
+      // Check if user is authenticated
+      if (!auth.currentUser) {
+        console.error('❌ User not authenticated');
+        throw new Error('User not authenticated. Please log in again.');
+      }
+      
       const q = collection(db, 'notifications');
       const querySnapshot = await getDocs(q);
       const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Notification[];
