@@ -110,9 +110,20 @@ const AddResourceModal: React.FC<AddResourceModalProps> = ({ isOpen, onClose, on
         equipment: '',
         maintenanceSchedule: ''
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding resource:', error);
-      toast.error('Failed to add resource. Please try again.');
+      console.error('Error details:', error.message, error.stack);
+      
+      // More specific error messages
+      if (error.message.includes('permission')) {
+        toast.error('Permission denied. Please check your admin privileges.');
+      } else if (error.message.includes('network')) {
+        toast.error('Network error. Please check your connection.');
+      } else if (error.message.includes('firestore')) {
+        toast.error('Database error. Please try again.');
+      } else {
+        toast.error(`Failed to add resource: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setIsLoading(false);
     }

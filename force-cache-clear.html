@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Force Cache Clear - Campus Resources</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .step {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Force Cache Clear</h1>
+        
+        <div class="warning">
+            <h3>⚠️ Important Notice</h3>
+            <p>Your browser is still using an old cached version of the application. This is why you're seeing errors and the fixes aren't working.</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 1: Hard Refresh (Recommended)</h3>
+            <p>Press these keys simultaneously:</p>
+            <div class="code">Ctrl + Shift + R</div>
+            <p>This will force your browser to reload all files from the server.</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Clear Browser Cache</h3>
+            <p>If Step 1 doesn't work, try these methods:</p>
+            <ul>
+                <li><strong>Chrome:</strong> Press F12 → Right-click refresh button → "Empty Cache and Hard Reload"</li>
+                <li><strong>Firefox:</strong> Press Ctrl + Shift + Delete → Select "Everything" → Clear Now</li>
+                <li><strong>Edge:</strong> Press Ctrl + Shift + Delete → Select "All time" → Clear</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Verify New Version</h3>
+            <p>After clearing cache, check the console for:</p>
+            <div class="code">Dashboard version: 2025-01-09-v4</div>
+            <p>If you see this version number, the cache clear was successful!</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Check JavaScript Files</h3>
+            <p>In the console, look for references to:</p>
+            <div class="code">index-3a18bca8.js</div>
+            <p>If you see <strong>index-c765da5.js</strong> instead, the cache clear didn't work.</p>
+        </div>
+
+        <div class="success">
+            <h3>✅ Expected Results After Cache Clear</h3>
+            <ul>
+                <li>Dashboard loads without function errors</li>
+                <li>Resources display correctly (should show 11 resources)</li>
+                <li>Add Resource functionality works</li>
+                <li>No more "getNotificationsByUser is not a function" errors</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/Campus_Resourses_management_System/dashboard" class="button">
+                🚀 Go to Dashboard
+            </a>
+            <a href="javascript:location.reload(true)" class="button">
+                🔄 Force Reload
+            </a>
+        </div>
+
+        <div class="warning" style="margin-top: 30px;">
+            <h3>🔧 If Problems Persist</h3>
+            <p>If you're still seeing issues after clearing cache:</p>
+            <ol>
+                <li>Try opening the dashboard in an <strong>Incognito/Private window</strong></li>
+                <li>Try a different browser</li>
+                <li>Wait 5-10 minutes for CDN cache to clear</li>
+                <li>Check if your internet connection is stable</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Add timestamp to prevent caching
+        console.log('🕒 Cache Clear Helper loaded at:', new Date().toISOString());
+        console.log('🔄 Current URL:', window.location.href);
+        
+        // Check if we're on the right domain
+        if (window.location.hostname.includes('github.io')) {
+            console.log('✅ GitHub Pages domain detected');
+        } else {
+            console.warn('⚠️ Not on GitHub Pages domain');
+        }
+    </script>
+</body>
+</html>
