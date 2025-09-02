@@ -366,8 +366,438 @@ class FirebaseService {
     }
   }
 
-  // Add other methods from the original service here...
-  // (Resource management, booking management, etc.)
+  // Resource Management
+  async createResource(resource: Omit<Resource, 'id' | 'createdAt' | 'updatedAt'>): Promise<Resource> {
+    try {
+      const resourceData = {
+        ...resource,
+        isUnderMaintenance: resource.isUnderMaintenance ?? false,
+        maintenanceNote: resource.maintenanceNote ?? '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const docRef = await addDoc(collection(db, 'resources'), resourceData);
+
+      return {
+        ...resourceData,
+        id: docRef.id
+      };
+    } catch (error: any) {
+      console.error('Create resource error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async getResources(): Promise<Resource[]> {
+    try {
+      console.log('🔍 Fetching resources...');
+      const resourcesRef = collection(db, 'resources');
+      const snapshot = await getDocs(resourcesRef);
+      
+      if (snapshot.empty) {
+        console.log('📊 No resources found, initializing sample data...');
+        await this.initializeSampleData();
+        // Return the sample data
+        return [
+          {
+            id: 'sample-1',
+            name: 'Computer Lab A',
+            type: 'lab' as const,
+            description: 'Fully equipped computer lab with 25 workstations',
+            category: 'Laboratory',
+            location: 'Building A, Room 101',
+            capacity: 25,
+            status: 'available' as const,
+            isUnderMaintenance: false,
+            maintenanceNote: '',
+            features: ['Computers', 'Projector', 'Whiteboard'],
+            equipment: ['Computers', 'Projector', 'Whiteboard'],
+            maintenanceSchedule: 'Monthly',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'sample-2',
+            name: 'Conference Room B',
+            type: 'room' as const,
+            description: 'Professional conference room with presentation equipment',
+            category: 'Meeting Room',
+            location: 'Building B, Room 205',
+            capacity: 15,
+            status: 'available' as const,
+            isUnderMaintenance: false,
+            maintenanceNote: '',
+            features: ['Projector', 'Video Conference System', 'Whiteboard'],
+            equipment: ['Projector', 'Video Conference System', 'Whiteboard'],
+            maintenanceSchedule: 'Quarterly',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 'sample-3',
+            name: 'Science Lab',
+            type: 'lab' as const,
+            description: 'Advanced science laboratory with modern equipment',
+            category: 'Laboratory',
+            location: 'Building C, Room 301',
+            capacity: 20,
+            status: 'available' as const,
+            isUnderMaintenance: false,
+            maintenanceNote: '',
+            features: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
+            equipment: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
+            maintenanceSchedule: 'Weekly',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ];
+      }
+      
+      const resources = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Resource[];
+      
+      console.log(`✅ Successfully fetched ${resources.length} resources`);
+      return resources;
+    } catch (error) {
+      console.error('Error getting resources:', error);
+      return [];
+    }
+  }
+
+  async initializeSampleData(): Promise<void> {
+    try {
+      console.log('📊 Initializing sample data...');
+      
+      // Create sample resources
+      const sampleResources = [
+        {
+          name: 'Computer Lab A',
+          type: 'lab' as const,
+          description: 'Fully equipped computer lab with 25 workstations',
+          category: 'Laboratory',
+          location: 'Building A, Room 101',
+          capacity: 25,
+          status: 'available' as const,
+          isUnderMaintenance: false,
+          maintenanceNote: '',
+          features: ['Computers', 'Projector', 'Whiteboard'],
+          equipment: ['Computers', 'Projector', 'Whiteboard'],
+          maintenanceSchedule: 'Monthly'
+        },
+        {
+          name: 'Conference Room B',
+          type: 'room' as const,
+          description: 'Professional conference room with presentation equipment',
+          category: 'Meeting Room',
+          location: 'Building B, Room 205',
+          capacity: 15,
+          status: 'available' as const,
+          isUnderMaintenance: false,
+          maintenanceNote: '',
+          features: ['Projector', 'Video Conference System', 'Whiteboard'],
+          equipment: ['Projector', 'Video Conference System', 'Whiteboard'],
+          maintenanceSchedule: 'Quarterly'
+        },
+        {
+          name: 'Science Lab',
+          type: 'lab' as const,
+          description: 'Advanced science laboratory with modern equipment',
+          category: 'Laboratory',
+          location: 'Building C, Room 301',
+          capacity: 20,
+          status: 'available' as const,
+          isUnderMaintenance: false,
+          maintenanceNote: '',
+          features: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
+          equipment: ['Microscopes', 'Lab Equipment', 'Safety Gear'],
+          maintenanceSchedule: 'Weekly'
+        }
+      ];
+
+      for (const resource of sampleResources) {
+        await this.createResource(resource);
+      }
+
+      console.log('✅ Sample data initialized successfully!');
+    } catch (error) {
+      console.error('❌ Error initializing sample data:', error);
+    }
+  }
+
+  async getResource(id: string): Promise<Resource> {
+    try {
+      const docRef = await getDoc(doc(db, 'resources', id));
+      if (!docRef.exists()) {
+        throw new Error('Resource not found');
+      }
+      return { id: docRef.id, ...docRef.data() } as Resource;
+    } catch (error: any) {
+      console.error('Get resource error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async updateResource(id: string, data: Partial<Resource>): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'resources', id), {
+        ...data,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error('Update resource error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async deleteResource(id: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, 'resources', id));
+    } catch (error: any) {
+      console.error('Delete resource error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  // Booking Management
+  async createBooking(booking: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<Booking> {
+    try {
+      console.log('🔥 Creating booking in Firebase with data:', booking);
+      
+      const docRef = await addDoc(collection(db, 'bookings'), {
+        ...booking,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
+      const createdBooking = { ...booking, id: docRef.id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      console.log('✅ Booking created successfully with ID:', docRef.id);
+      console.log('📋 Created booking data:', createdBooking);
+      
+      return createdBooking;
+    } catch (error: any) {
+      console.error('Create booking error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async getBookings(userId?: string): Promise<Booking[]> {
+    try {
+      console.log('🔍 getBookings called with userId:', userId);
+
+      let q: any = collection(db, 'bookings');
+      if (userId) {
+        console.log('🔍 Adding userId filter:', userId);
+        q = query(collection(db, 'bookings'), where('userId', '==', userId));
+      }
+
+      console.log('🔍 Executing Firestore query...');
+      const querySnapshot = await getDocs(q);
+      console.log('🔍 Query returned', querySnapshot.docs.length, 'documents');
+
+      const bookings = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return Object.assign({ id: doc.id }, data) as Booking;
+      });
+      console.log('🔍 Mapped bookings:', bookings);
+
+      // Sort manually instead of using orderBy
+      bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      return bookings;
+    } catch (error: any) {
+      console.error('Get bookings error:', error);
+      return []; // Return empty array instead of throwing error
+    }
+  }
+
+  // Alias for getBookings with userId parameter
+  async getBookingsByUser(userId: string): Promise<Booking[]> {
+    console.log('🔍 Fetching bookings for user ID:', userId);
+    const bookings = await this.getBookings(userId);
+    console.log('📋 Found bookings for user', userId, ':', bookings.length, 'bookings');
+    console.log('📋 Booking details:', bookings.map(b => ({
+      id: b.id,
+      resourceName: b.resourceName,
+      status: b.status,
+      userId: b.userId
+    })));
+    return bookings;
+  }
+
+  async getAllBookings(): Promise<Booking[]> {
+    try {
+      console.log('🔍 Getting all bookings (admin view)');
+      const q = collection(db, 'bookings');
+      const querySnapshot = await getDocs(q);
+      const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
+      
+      // Sort by creation date (newest first)
+      bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      console.log('📋 Found', bookings.length, 'total bookings');
+      console.log('📋 All booking details:', bookings.map(b => ({
+        id: b.id,
+        resourceName: b.resourceName,
+        status: b.status,
+        userId: b.userId,
+        userName: b.userName
+      })));
+      return bookings;
+    } catch (error) {
+      console.error('Get all bookings error:', error);
+      return [];
+    }
+  }
+
+  async getBooking(id: string): Promise<Booking> {
+    try {
+      const docRef = await getDoc(doc(db, 'bookings', id));
+      if (!docRef.exists()) {
+        throw new Error('Booking not found');
+      }
+      return { id: docRef.id, ...docRef.data() } as Booking;
+    } catch (error: any) {
+      console.error('Get booking error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async updateBooking(id: string, data: Partial<Booking>): Promise<void> {
+    try {
+      console.log('🔄 Updating booking:', id, 'with data:', data);
+      await updateDoc(doc(db, 'bookings', id), {
+        ...data,
+        updatedAt: new Date().toISOString()
+      });
+      console.log('✅ Booking updated successfully');
+    } catch (error: any) {
+      console.error('Update booking error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async approveBooking(bookingId: string): Promise<void> {
+    try {
+      console.log('✅ Approving booking:', bookingId);
+      await updateDoc(doc(db, 'bookings', bookingId), {
+        status: 'approved',
+        updatedAt: new Date().toISOString()
+      });
+      console.log('✅ Booking approved successfully');
+    } catch (error: any) {
+      console.error('Approve booking error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async rejectBooking(bookingId: string): Promise<void> {
+    try {
+      console.log('❌ Rejecting booking:', bookingId);
+      await updateDoc(doc(db, 'bookings', bookingId), {
+        status: 'rejected',
+        updatedAt: new Date().toISOString()
+      });
+      console.log('✅ Booking rejected successfully');
+    } catch (error: any) {
+      console.error('Reject booking error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async deleteBooking(id: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, 'bookings', id));
+    } catch (error: any) {
+      console.error('Delete booking error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  // Notification Management
+  async createNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification> {
+    try {
+      console.log('📢 Creating notification:', notification);
+      const docRef = await addDoc(collection(db, 'notifications'), {
+        ...notification,
+        createdAt: new Date().toISOString()
+      });
+
+      const createdNotification = { ...notification, id: docRef.id, createdAt: new Date().toISOString() };
+      console.log('✅ Notification created successfully with ID:', docRef.id);
+      return createdNotification;
+    } catch (error: any) {
+      console.error('Create notification error:', error);
+      throw new Error(error.message);
+    }
+  }
+
+  async getAllNotifications(): Promise<Notification[]> {
+    try {
+      console.log('🔍 Getting all notifications (admin view)');
+      const q = collection(db, 'notifications');
+      const querySnapshot = await getDocs(q);
+      const notifications = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Notification[];
+      
+      // Sort by creation date (newest first)
+      notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      console.log('📋 Found', notifications.length, 'notifications');
+      return notifications;
+    } catch (error) {
+      console.error('Get all notifications error:', error);
+      return [];
+    }
+  }
+
+  async getNotificationsByUser(userId: string): Promise<Notification[]> {
+    try {
+      console.log('🔍 Getting notifications for user:', userId);
+      
+      // Get user-specific notifications
+      const userQuery = query(
+        collection(db, 'notifications'),
+        where('userId', '==', userId)
+      );
+      
+      // Get system-wide notifications (admin announcements)
+      const systemQuery = query(
+        collection(db, 'notifications'),
+        where('isSystemNotification', '==', true)
+      );
+      
+      const [userSnapshot, systemSnapshot] = await Promise.all([
+        getDocs(userQuery),
+        getDocs(systemQuery)
+      ]);
+      
+      const userNotifications = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Notification[];
+      const systemNotifications = systemSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Notification[];
+      
+      // Combine and sort all notifications
+      const allNotifications = [...userNotifications, ...systemNotifications];
+      allNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      console.log('📋 Found', allNotifications.length, 'notifications for user');
+      return allNotifications;
+    } catch (error) {
+      console.error('Get notifications error:', error);
+      return []; // Return empty array instead of throwing error
+    }
+  }
+
+  async deleteNotification(notificationId: string): Promise<void> {
+    try {
+      console.log('🗑️ Deleting notification:', notificationId);
+      await deleteDoc(doc(db, 'notifications', notificationId));
+      console.log('✅ Notification deleted successfully');
+    } catch (error: any) {
+      console.error('Delete notification error:', error);
+      throw new Error(error.message);
+    }
+  }
 }
 
 export const firebaseService = new FirebaseService();
