@@ -265,6 +265,38 @@ class FirebaseService {
     }
   }
 
+  async updateUserProfile(userId: string, data: any): Promise<void> {
+    try {
+      console.log('🔄 Updating user profile for:', userId);
+
+      // Update Firestore document
+      const updateData: any = {
+        username: data.username,
+        email: data.email,
+        department: data.department,
+        bio: data.bio,
+        profilePicture: data.profilePicture,
+        profilePicturePublicId: data.profilePicturePublicId,
+        updatedAt: new Date().toISOString()
+      };
+
+      // Only include fields that are provided
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined || updateData[key] === null) {
+          delete updateData[key];
+        }
+      });
+
+      console.log('📝 Updating Firestore user document:', updateData);
+      await updateDoc(doc(db, 'users', userId), updateData);
+
+      console.log('✅ User profile updated successfully');
+    } catch (error: any) {
+      console.error('❌ User profile update error:', error);
+      throw new Error(error.message);
+    }
+  }
+
   // Helper method to check if user exists in Firestore
   async checkUserExists(userId: string): Promise<boolean> {
     try {
@@ -719,6 +751,59 @@ class FirebaseService {
     }
   }
 
+  // Check for booking conflicts
+  async checkBookingConflicts(resourceId: string, startTime: string, endTime: string, excludeBookingId?: string): Promise<Booking[]> {
+    try {
+      console.log('🔍 Checking booking conflicts for resource:', resourceId);
+      console.log('🔍 Time range:', startTime, 'to', endTime);
+      
+      let q = query(
+        collection(db, 'bookings'),
+        where('resourceId', '==', resourceId),
+        where('status', 'in', ['pending', 'approved'])
+      );
+
+      const querySnapshot = await getDocs(q);
+      const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
+      
+      console.log('🔍 Found', bookings.length, 'existing bookings for this resource');
+      
+      // Get the date of the new booking for same-day filtering
+      const newBookingDate = new Date(startTime).toDateString();
+      
+      const conflicts = bookings.filter(booking => {
+        if (excludeBookingId && booking.id === excludeBookingId) return false;
+        
+        const bookingStart = new Date(booking.startTime);
+        const bookingEnd = new Date(booking.endTime);
+        const newStart = new Date(startTime);
+        const newEnd = new Date(endTime);
+        
+        // Only check conflicts for the same day
+        const bookingDate = bookingStart.toDateString();
+        if (bookingDate !== newBookingDate) {
+          return false; // Skip bookings from different days
+        }
+        
+        const hasConflict = (bookingStart < newEnd && bookingEnd > newStart);
+        
+        if (hasConflict) {
+          console.log('⚠️ Same-day conflict found with booking:', booking.id);
+          console.log('⚠️ Existing booking time:', bookingStart, 'to', bookingEnd);
+          console.log('⚠️ New booking time:', newStart, 'to', newEnd);
+        }
+        
+        return hasConflict;
+      });
+      
+      console.log('🔍 Same-day conflicts found:', conflicts.length);
+      return conflicts;
+    } catch (error: any) {
+      console.error('Check booking conflicts error:', error);
+      throw new Error(error.message);
+    }
+  }
+
   // Notification Management
   async createNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification> {
     try {
@@ -835,6 +920,8 @@ export const firebaseServiceWithMethods = {
   
   // User methods
   getAllUsers: firebaseService.getAllUsers.bind(firebaseService),
+  getUserById: firebaseService.getUserById.bind(firebaseService),
+  updateUserProfile: firebaseService.updateUserProfile.bind(firebaseService),
   
   // Resource methods
   getResources: firebaseService.getResources.bind(firebaseService),
@@ -848,6 +935,9 @@ export const firebaseServiceWithMethods = {
   createBooking: firebaseService.createBooking.bind(firebaseService),
   updateBooking: firebaseService.updateBooking.bind(firebaseService),
   deleteBooking: firebaseService.deleteBooking.bind(firebaseService),
+  checkBookingConflicts: firebaseService.checkBookingConflicts.bind(firebaseService),
+  approveBooking: firebaseService.approveBooking.bind(firebaseService),
+  rejectBooking: firebaseService.rejectBooking.bind(firebaseService),
   
   // Notification methods
   getAllNotifications: firebaseService.getAllNotifications.bind(firebaseService),
