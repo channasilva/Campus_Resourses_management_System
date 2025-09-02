@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, GraduationCap } from 'lucide-react';
+// Updated LoginPage - No Google Sign-In - 9/2/2025 4:21:22 AM
+// This version has NO Google Sign-In or social login buttons
+// Only email/password authentication is supported
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { LoginFormData } from '../types/auth';
