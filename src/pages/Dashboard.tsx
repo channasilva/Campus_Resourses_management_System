@@ -83,6 +83,7 @@ const Dashboard: React.FC = () => {
     const initializeDashboard = async () => {
       try {
         console.log('🔄 Initializing dashboard...');
+        console.log('🕒 Dashboard version: 2025-01-09-v2');
         
         // Try to get user from localStorage first (fallback)
         const userData = localStorage.getItem('user');
@@ -162,10 +163,16 @@ const Dashboard: React.FC = () => {
       // Load resources (always needed)
       try {
         console.log('📚 Loading resources...');
+        console.log('🔍 Calling firebaseService.getResources()...');
         resourcesData = await firebaseService.getResources();
         console.log('✅ Resources loaded:', resourcesData.length);
+        console.log('📋 Resources data:', resourcesData);
+        if (resourcesData.length > 0) {
+          console.log('🎯 First resource:', resourcesData[0]);
+        }
       } catch (error) {
         console.error('❌ Error loading resources:', error);
+        console.error('❌ Error details:', error.message, error.stack);
         toast.error('Failed to load resources. Using empty list.');
         resourcesData = [];
       }
@@ -223,9 +230,11 @@ const Dashboard: React.FC = () => {
       setNotifications(notificationsData);
       setUserCount(userCount);
       
-      // Show success message if we loaded any data
-      if (resourcesData.length > 0 || bookingsData.length > 0 || notificationsData.length > 0) {
-        toast.success('Dashboard data loaded successfully!');
+      // Show success message based on what we loaded
+      if (resourcesData.length > 0) {
+        toast.success(`Dashboard loaded successfully! Found ${resourcesData.length} resources.`);
+      } else if (bookingsData.length > 0 || notificationsData.length > 0) {
+        toast.success('Dashboard loaded successfully!');
       } else {
         toast.info('Dashboard loaded. No data found - this is normal for a new system.');
       }

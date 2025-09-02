@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Firebase Connection</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .result.info {
+            background-color: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        .instructions {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Test Firebase Connection</h1>
+        
+        <div class="instructions">
+            <h3>📋 What This Tool Does:</h3>
+            <p>This tool tests the direct Firebase connection and data access to identify if there are any connection issues preventing the dashboard from loading data.</p>
+        </div>
+        
+        <button onclick="testFirebaseConnection()">🚀 Test Firebase Connection & Data Access</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, getDocs, collection } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa63IAknYHAx_zUbxtCXXaxYnh8ExZ9fY",
+            authDomain: "campus-resources-demo.firebaseapp.com",
+            projectId: "campus-resources-demo",
+            storageBucket: "campus-resources-demo.firebasestorage.app",
+            messagingSenderId: "96808245065",
+            appId: "1:96808245065:web:75462c690a22b3e887ec98"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // Wait for auth state to be determined
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+        });
+
+        window.testFirebaseConnection = async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing Firebase connection...\n\n';
+            
+            let result = '🔗 Firebase Connection Test\n';
+            result += '==========================\n\n';
+            
+            try {
+                // Wait for auth state
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                result += `Firebase App Initialized: ✅\n`;
+                result += `Firestore Database: ✅\n`;
+                result += `Authentication: ✅\n\n`;
+                
+                // Test authentication
+                if (currentUser) {
+                    result += `✅ User Authenticated: ${currentUser.email}\n`;
+                    result += `User ID: ${currentUser.uid}\n\n`;
+                } else {
+                    result += `⚠️ No authenticated user found\n`;
+                    result += `This might be why dashboard data is not loading\n\n`;
+                }
+                
+                // Test direct Firestore access
+                result += 'Testing Firestore Collections:\n';
+                result += '==============================\n\n';
+                
+                // Test users collection
+                try {
+                    const usersRef = collection(db, 'users');
+                    const usersSnapshot = await getDocs(usersRef);
+                    result += `✅ Users Collection: ${usersSnapshot.docs.length} documents\n`;
+                    
+                    if (usersSnapshot.docs.length > 0) {
+                        const firstUser = usersSnapshot.docs[0].data();
+                        result += `   Sample user: ${firstUser.username || firstUser.email || 'Unknown'}\n`;
+                    }
+                } catch (error) {
+                    result += `❌ Users Collection Error: ${error.message}\n`;
+                }
+                
+                // Test resources collection
+                try {
+                    const resourcesRef = collection(db, 'resources');
+                    const resourcesSnapshot = await getDocs(resourcesRef);
+                    result += `✅ Resources Collection: ${resourcesSnapshot.docs.length} documents\n`;
+                    
+                    if (resourcesSnapshot.docs.length > 0) {
+                        const firstResource = resourcesSnapshot.docs[0].data();
+                        result += `   Sample resource: ${firstResource.name || 'Unknown'} (${firstResource.type || 'Unknown'})\n`;
+                    }
+                } catch (error) {
+                    result += `❌ Resources Collection Error: ${error.message}\n`;
+                }
+                
+                // Test bookings collection
+                try {
+                    const bookingsRef = collection(db, 'bookings');
+                    const bookingsSnapshot = await getDocs(bookingsRef);
+                    result += `✅ Bookings Collection: ${bookingsSnapshot.docs.length} documents\n`;
+                } catch (error) {
+                    result += `❌ Bookings Collection Error: ${error.message}\n`;
+                }
+                
+                // Test notifications collection
+                try {
+                    const notificationsRef = collection(db, 'notifications');
+                    const notificationsSnapshot = await getDocs(notificationsRef);
+                    result += `✅ Notifications Collection: ${notificationsSnapshot.docs.length} documents\n`;
+                } catch (error) {
+                    result += `❌ Notifications Collection Error: ${error.message}\n`;
+                }
+                
+                result += '\n';
+                result += '🎯 Connection Test Summary:\n';
+                result += '==========================\n';
+                result += 'If all collections show ✅, Firebase connection is working.\n';
+                result += 'If you see ❌ errors, there might be permission issues.\n';
+                result += 'If resources show 0 documents, the data might not exist.\n\n';
+                
+                if (currentUser) {
+                    result += '✅ Firebase connection is working properly!\n';
+                    result += 'The dashboard should be able to load data.\n';
+                    resultDiv.className = 'result success';
+                } else {
+                    result += '⚠️ Firebase connection works, but no user is authenticated.\n';
+                    result += 'Please log in to the dashboard first.\n';
+                    resultDiv.className = 'result error';
+                }
+                
+                resultDiv.textContent = result;
+                
+            } catch (error) {
+                result += `❌ Firebase connection test failed: ${error.message}\n`;
+                result += `Stack trace: ${error.stack}\n`;
+                resultDiv.className = 'result error';
+                resultDiv.textContent = result;
+            }
+        };
+    </script>
+</body>
+</html>
