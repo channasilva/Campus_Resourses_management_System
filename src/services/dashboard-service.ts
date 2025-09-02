@@ -1,4 +1,4 @@
-import { firebaseService } from './firebase-service';
+import firebaseService from './firebase-service';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { Resource, Booking, Notification, User } from '../types';
 

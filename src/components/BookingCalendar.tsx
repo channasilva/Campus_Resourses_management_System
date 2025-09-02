@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Calendar as CalendarIcon, Clock, Users, MapPin } from 'lucide-react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import { Booking } from '../types';
 import { toLocalDateString, formatLocalTime } from '../utils/date-utils';
 

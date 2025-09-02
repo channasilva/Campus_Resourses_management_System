@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Send } from 'lucide-react';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import Button from './Button';
 import Input from './Input';
 import toast from 'react-hot-toast';

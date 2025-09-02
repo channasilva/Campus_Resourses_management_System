@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Wrench, AlertTriangle, CheckCircle } from 'lucide-react';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import toast from 'react-hot-toast';
 
 interface MaintenanceToggleProps {

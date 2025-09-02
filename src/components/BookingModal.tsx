@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Users } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import { Booking, Resource } from '../types';
 import { createLocalDateTime, toLocalISOString } from '../utils/date-utils';
 import toast from 'react-hot-toast';

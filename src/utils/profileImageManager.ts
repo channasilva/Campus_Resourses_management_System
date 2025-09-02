@@ -4,7 +4,7 @@
  */
 
 import { cloudinaryService } from '../services/cloudinary-service';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 
 interface ProfileImageData {
   cloudinaryUrl: string;

@@ -33,7 +33,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import Button from '../components/Button';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import { dashboardService } from '../services/dashboard-service';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';

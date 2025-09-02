@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, TrendingUp, Activity } from 'lucide-react';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 
 interface UserCountCardProps {
   className?: string;

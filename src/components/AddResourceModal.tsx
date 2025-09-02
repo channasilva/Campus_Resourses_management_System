@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Plus, MapPin, Users, Shield, Wrench, Calendar } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import toast from 'react-hot-toast';
 
 interface AddResourceModalProps {

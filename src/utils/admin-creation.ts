@@ -1,4 +1,4 @@
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 
 // Admin creation utility
 // This should only be used by existing admins or through a secure process

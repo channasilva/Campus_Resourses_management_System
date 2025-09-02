@@ -1,4 +1,4 @@
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 
 export const initializeSampleData = async (): Promise<void> => {
   try {

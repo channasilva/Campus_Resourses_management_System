@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, User, Mail, Building, FileText, Lock, Eye, EyeOff, Camera, Upload, Trash2 } from 'lucide-react';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import { cloudinaryService } from '../services/cloudinary-service';
 import Button from './Button';
 import Input from './Input';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import { User } from '../types';
 
 const DebugPanel: React.FC = () => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Edit, MapPin, Users, Shield, Wrench, Calendar } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import { Resource } from '../types';
 import toast from 'react-hot-toast';
 

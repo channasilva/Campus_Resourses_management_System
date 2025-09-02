@@ -5,7 +5,7 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import { RegisterFormData } from '../types/auth';
 import { validateEmail, validatePassword, validateUsername } from '../utils/validation';
-import { firebaseService } from '../services/firebase-service';
+import firebaseService from '../services/firebase-service';
 import toast, { Toaster } from 'react-hot-toast';
 
 const RegisterPage: React.FC = () => {
