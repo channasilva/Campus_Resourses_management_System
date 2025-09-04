@@ -4,7 +4,7 @@ import Button from './Button';
 import Input from './Input';
 import firebaseService from '../services/firebase-service';
 import { Booking, Resource } from '../types';
-import { createLocalDateTime, toLocalISOString } from '../utils/date-utils';
+import { createLocalDateTime, toLocalISOString, formatLocalDateTime } from '../utils/date-utils';
 import toast from 'react-hot-toast';
 
 interface BookingModalProps {
@@ -158,8 +158,23 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
     try {
       // Create dates in local timezone to avoid timezone shifts
+      console.log('🕒 Creating booking with times:', {
+        startDate: formData.startDate,
+        startTime: formData.startTime,
+        endTime: formData.endTime
+      });
+      
       const startDateTime = createLocalDateTime(formData.startDate, formData.startTime);
       const endDateTime = createLocalDateTime(formData.startDate, formData.endTime);
+      
+      console.log('🕒 Created date objects:', {
+        startDateTime: startDateTime.toString(),
+        endDateTime: endDateTime.toString(),
+        startHours: startDateTime.getHours(),
+        startMinutes: startDateTime.getMinutes(),
+        endHours: endDateTime.getHours(),
+        endMinutes: endDateTime.getMinutes()
+      });
 
       // Final conflict check (in case of race conditions)
       console.log('🔍 Final conflict check before booking...');
@@ -181,14 +196,24 @@ const BookingModal: React.FC<BookingModalProps> = ({
       
       console.log('✅ No conflicts found, creating booking...');
 
+      const startTimeISO = toLocalISOString(startDateTime);
+      const endTimeISO = toLocalISOString(endDateTime);
+      
+      console.log('🕒 Final ISO strings for storage:', {
+        startTimeISO,
+        endTimeISO,
+        startTimeFormatted: formatLocalDateTime(startTimeISO),
+        endTimeFormatted: formatLocalDateTime(endTimeISO)
+      });
+
       const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: currentUser.id,
         userName: currentUser.username,
         userRole: currentUser.role,
         resourceId: resource.id,
         resourceName: resource.name,
-        startTime: toLocalISOString(startDateTime),
-        endTime: toLocalISOString(endDateTime),
+        startTime: startTimeISO,
+        endTime: endTimeISO,
         purpose: formData.purpose,
         attendees: parseInt(formData.attendees) || 1,
         status: 'pending',

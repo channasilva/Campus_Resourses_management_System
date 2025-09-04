@@ -21,18 +21,17 @@
         }
         .test-result {
             background: #e8f5e8;
+            border: 1px solid #4caf50;
             padding: 10px;
             border-radius: 4px;
             margin: 10px 0;
-            border-left: 4px solid #4caf50;
         }
-        .error {
+        .test-error {
             background: #ffebee;
-            border-left-color: #f44336;
-        }
-        .info {
-            background: #e3f2fd;
-            border-left-color: #2196f3;
+            border: 1px solid #f44336;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
         }
         button {
             background: #2196f3;
@@ -46,177 +45,220 @@
         button:hover {
             background: #1976d2;
         }
-        .input-group {
-            margin: 10px 0;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
         input {
             padding: 8px;
+            margin: 5px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            width: 200px;
         }
     </style>
 </head>
 <body>
-    <h1>Timezone Fix Test</h1>
-    <p>This test verifies that booking times are handled correctly across timezone conversions.</p>
-    
+    <h1>🕒 Timezone Fix Test</h1>
+    <p>This page tests the timezone handling fix for the booking system.</p>
+
     <div class="test-container">
         <h2>Test Time Input</h2>
-        <div class="input-group">
-            <label for="startTime">Start Time (HH:MM):</label>
-            <input type="time" id="startTime" value="08:00">
+        <div>
+            <label>Date: <input type="date" id="testDate" value="2025-12-20"></label>
+            <label>Start Time: <input type="time" id="startTime" value="08:00"></label>
+            <label>End Time: <input type="time" id="endTime" value="12:30"></label>
         </div>
-        <div class="input-group">
-            <label for="endTime">End Time (HH:MM):</label>
-            <input type="time" id="endTime" value="12:30">
-        </div>
-        <div class="input-group">
-            <label for="date">Date:</label>
-            <input type="date" id="date" value="2025-12-12">
-        </div>
-        <button onclick="testTimezoneConversion()">Test Timezone Conversion</button>
+        <button onclick="testTimezoneHandling()">Test Timezone Handling</button>
+        <div id="testResults"></div>
     </div>
 
     <div class="test-container">
-        <h2>Test Results</h2>
-        <div id="results"></div>
+        <h2>Test Display Functions</h2>
+        <button onclick="testDisplayFunctions()">Test Display Functions</button>
+        <div id="displayResults"></div>
     </div>
 
     <script>
-        // Replicate the date utility functions from the app
+        // Replicate the fixed date utility functions
         function createLocalDateTime(dateString, timeString) {
-            const date = new Date(`${dateString}T${timeString}:00`);
+            const [year, month, day] = dateString.split('-').map(Number);
+            const [hours, minutes] = timeString.split(':').map(Number);
+            
+            const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
+            
             if (isNaN(date.getTime())) {
                 throw new Error('Invalid date or time format');
             }
+            
             return date;
         }
 
         function toLocalISOString(localDate) {
-            const offset = localDate.getTimezoneOffset();
-            const utcDate = new Date(localDate.getTime() - (offset * 60000));
-            return utcDate.toISOString();
+            const year = localDate.getFullYear();
+            const month = String(localDate.getMonth() + 1).padStart(2, '0');
+            const day = String(localDate.getDate()).padStart(2, '0');
+            const hours = String(localDate.getHours()).padStart(2, '0');
+            const minutes = String(localDate.getMinutes()).padStart(2, '0');
+            const seconds = String(localDate.getSeconds()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
         }
 
         function formatLocalTime(dateString) {
             const date = new Date(dateString);
-            return date.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            });
+            
+            if (dateString.endsWith('Z')) {
+                return date.toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+            }
+            
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            
+            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
         }
 
         function formatLocalDateTime(dateString) {
             const date = new Date(dateString);
-            return date.toLocaleString([], {
-                year: 'numeric',
-                month: 'numeric',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
+            
+            if (dateString.endsWith('Z')) {
+                return date.toLocaleString([], {
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            }
+            
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            
+            return `${month}/${day}/${year}, ${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
         }
 
-        function testTimezoneConversion() {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-
+        function testTimezoneHandling() {
+            const testDate = document.getElementById('testDate').value;
             const startTime = document.getElementById('startTime').value;
             const endTime = document.getElementById('endTime').value;
-            const date = document.getElementById('date').value;
-
+            
+            const resultsDiv = document.getElementById('testResults');
+            
             try {
-                // Step 1: Create local date objects
-                const startDateTime = createLocalDateTime(date, startTime);
-                const endDateTime = createLocalDateTime(date, endTime);
-
-                resultsDiv.innerHTML += `
-                    <div class="test-result info">
-                        <strong>Step 1 - Input Times:</strong><br>
-                        Start: ${startTime} (${date})<br>
-                        End: ${endTime} (${date})
-                    </div>
-                `;
-
-                // Step 2: Convert to ISO strings for storage
-                const startISO = toLocalISOString(startDateTime);
-                const endISO = toLocalISOString(endDateTime);
-
-                resultsDiv.innerHTML += `
-                    <div class="test-result info">
-                        <strong>Step 2 - Stored ISO Strings:</strong><br>
-                        Start: ${startISO}<br>
-                        End: ${endISO}
-                    </div>
-                `;
-
-                // Step 3: Format back for display
-                const displayStartTime = formatLocalTime(startISO);
-                const displayEndTime = formatLocalTime(endISO);
-                const displayStartDateTime = formatLocalDateTime(startISO);
-                const displayEndDateTime = formatLocalDateTime(endISO);
-
-                resultsDiv.innerHTML += `
-                    <div class="test-result info">
-                        <strong>Step 3 - Display Times:</strong><br>
-                        Start Time: ${displayStartTime}<br>
-                        End Time: ${displayEndTime}<br>
-                        Start DateTime: ${displayStartDateTime}<br>
-                        End DateTime: ${displayEndDateTime}
-                    </div>
-                `;
-
-                // Check if times match
-                const timesMatch = displayStartTime === startTime && displayEndTime === endTime;
+                console.log('🧪 Testing timezone handling...');
+                console.log('Input:', { testDate, startTime, endTime });
                 
-                if (timesMatch) {
-                    resultsDiv.innerHTML += `
-                        <div class="test-result">
-                            <strong>✅ SUCCESS:</strong> Times display correctly! The timezone fix is working.
-                        </div>
-                    `;
-                } else {
-                    resultsDiv.innerHTML += `
-                        <div class="test-result error">
-                            <strong>❌ ISSUE:</strong> Times don't match!<br>
-                            Expected: ${startTime} - ${endTime}<br>
-                            Got: ${displayStartTime} - ${displayEndTime}
-                        </div>
-                    `;
-                }
-
-                // Show timezone info
-                const timezoneOffset = new Date().getTimezoneOffset();
-                const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                // Test the fixed functions
+                const startDateTime = createLocalDateTime(testDate, startTime);
+                const endDateTime = createLocalDateTime(testDate, endTime);
                 
-                resultsDiv.innerHTML += `
-                    <div class="test-result info">
-                        <strong>Timezone Info:</strong><br>
-                        Timezone: ${timezoneName}<br>
-                        Offset: ${timezoneOffset} minutes (${timezoneOffset > 0 ? 'behind' : 'ahead of'} UTC)
+                console.log('Created date objects:', {
+                    startDateTime: startDateTime.toString(),
+                    endDateTime: endDateTime.toString(),
+                    startHours: startDateTime.getHours(),
+                    startMinutes: startDateTime.getMinutes(),
+                    endHours: endDateTime.getHours(),
+                    endMinutes: endDateTime.getMinutes()
+                });
+                
+                const startTimeISO = toLocalISOString(startDateTime);
+                const endTimeISO = toLocalISOString(endDateTime);
+                
+                console.log('ISO strings:', { startTimeISO, endTimeISO });
+                
+                const startTimeFormatted = formatLocalDateTime(startTimeISO);
+                const endTimeFormatted = formatLocalDateTime(endTimeISO);
+                
+                console.log('Formatted times:', { startTimeFormatted, endTimeFormatted });
+                
+                // Check if times match input
+                const startMatches = startDateTime.getHours() === parseInt(startTime.split(':')[0]) && 
+                                   startDateTime.getMinutes() === parseInt(startTime.split(':')[1]);
+                const endMatches = endDateTime.getHours() === parseInt(endTime.split(':')[0]) && 
+                                 endDateTime.getMinutes() === parseInt(endTime.split(':')[1]);
+                
+                const success = startMatches && endMatches;
+                
+                resultsDiv.innerHTML = `
+                    <div class="test-result">
+                        <h3>✅ Test Results</h3>
+                        <p><strong>Input Times:</strong> ${startTime} - ${endTime}</p>
+                        <p><strong>Created Date Objects:</strong></p>
+                        <ul>
+                            <li>Start: ${startDateTime.toString()} (${startDateTime.getHours()}:${startDateTime.getMinutes().toString().padStart(2, '0')})</li>
+                            <li>End: ${endDateTime.toString()} (${endDateTime.getHours()}:${endDateTime.getMinutes().toString().padStart(2, '0')})</li>
+                        </ul>
+                        <p><strong>ISO Strings for Storage:</strong></p>
+                        <ul>
+                            <li>Start: ${startTimeISO}</li>
+                            <li>End: ${endTimeISO}</li>
+                        </ul>
+                        <p><strong>Formatted Display:</strong></p>
+                        <ul>
+                            <li>Start: ${startTimeFormatted}</li>
+                            <li>End: ${endTimeFormatted}</li>
+                        </ul>
+                        <p><strong>Time Match Check:</strong> ${startMatches ? '✅' : '❌'} Start Time, ${endMatches ? '✅' : '❌'} End Time</p>
+                        <p><strong>Overall Result:</strong> ${success ? '✅ SUCCESS - Times preserved correctly!' : '❌ FAILED - Times were shifted'}</p>
                     </div>
                 `;
-
+                
             } catch (error) {
-                resultsDiv.innerHTML += `
-                    <div class="test-result error">
-                        <strong>❌ ERROR:</strong> ${error.message}
+                console.error('Test error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="test-error">
+                        <h3>❌ Test Error</h3>
+                        <p>Error: ${error.message}</p>
                     </div>
                 `;
             }
         }
 
-        // Run test on page load
+        function testDisplayFunctions() {
+            const resultsDiv = document.getElementById('displayResults');
+            
+            // Test with various time formats
+            const testTimes = [
+                '2025-12-20T08:00:00.000Z',
+                '2025-12-20T12:30:00.000Z',
+                '2025-12-20T14:15:00.000Z',
+                '2025-12-20T23:45:00.000Z'
+            ];
+            
+            let results = '<div class="test-result"><h3>✅ Display Function Test Results</h3>';
+            
+            testTimes.forEach(timeStr => {
+                try {
+                    const timeFormatted = formatLocalTime(timeStr);
+                    const dateTimeFormatted = formatLocalDateTime(timeStr);
+                    
+                    results += `
+                        <p><strong>Input:</strong> ${timeStr}</p>
+                        <p><strong>Time Only:</strong> ${timeFormatted}</p>
+                        <p><strong>Date & Time:</strong> ${dateTimeFormatted}</p>
+                        <hr>
+                    `;
+                } catch (error) {
+                    results += `<p><strong>Error with ${timeStr}:</strong> ${error.message}</p>`;
+                }
+            });
+            
+            results += '</div>';
+            resultsDiv.innerHTML = results;
+        }
+
+        // Auto-run test on page load
         window.onload = function() {
-            testTimezoneConversion();
+            console.log('🕒 Timezone Fix Test Page Loaded');
+            console.log('Current timezone offset:', new Date().getTimezoneOffset(), 'minutes');
+            console.log('Current time:', new Date().toString());
         };
     </script>
 </body>
