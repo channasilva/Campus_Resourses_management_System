@@ -20,19 +20,10 @@ export const toLocalDateString = (dateString: string): string => {
  * @returns Formatted time string (e.g., "12:30 PM")
  */
 export const formatLocalTime = (dateString: string): string => {
-  // Parse the stored time as if it's already in local timezone
+  // Parse the stored time
   const date = new Date(dateString);
   
-  // If the date string ends with 'Z', treat it as UTC and convert to local
-  if (dateString.endsWith('Z')) {
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
-  }
-  
-  // Otherwise, treat it as local time and format directly
+  // Format directly using local timezone
   const hours = date.getHours();
   const minutes = date.getMinutes();
   const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -49,19 +40,7 @@ export const formatLocalTime = (dateString: string): string => {
 export const formatLocalDateTime = (dateString: string): string => {
   const date = new Date(dateString);
   
-  // If the date string ends with 'Z', treat it as UTC and convert to local
-  if (dateString.endsWith('Z')) {
-    return date.toLocaleString([], {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  }
-  
-  // Otherwise, treat it as local time and format directly
+  // Format directly using local timezone
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -109,6 +88,13 @@ export const toLocalISOString = (localDate: Date): string => {
   const minutes = String(localDate.getMinutes()).padStart(2, '0');
   const seconds = String(localDate.getSeconds()).padStart(2, '0');
   
-  // Return ISO string that preserves the local time
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+  // Get timezone offset in minutes and convert to HH:MM format
+  const offset = localDate.getTimezoneOffset();
+  const offsetHours = Math.floor(Math.abs(offset) / 60);
+  const offsetMinutes = Math.abs(offset) % 60;
+  const offsetSign = offset <= 0 ? '+' : '-';
+  const offsetString = `${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
+  
+  // Return ISO string with timezone offset instead of Z
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000${offsetString}`;
 };

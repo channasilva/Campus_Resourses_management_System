@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Timezone Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 200px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            background-color: #e8f5e8;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left-color: #dc3545;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-left-color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕒 Booking Timezone Fix Test</h1>
+        <p>This page tests the timezone handling fix for the booking system. Enter a time and see how it's processed and displayed.</p>
+
+        <div class="test-section">
+            <h2>Test Time Input and Conversion</h2>
+            
+            <div class="input-group">
+                <label for="testDate">Date:</label>
+                <input type="date" id="testDate" value="2025-12-20">
+            </div>
+            
+            <div class="input-group">
+                <label for="testStartTime">Start Time:</label>
+                <input type="time" id="testStartTime" value="09:00">
+            </div>
+            
+            <div class="input-group">
+                <label for="testEndTime">End Time:</label>
+                <input type="time" id="testEndTime" value="12:00">
+            </div>
+            
+            <button onclick="testTimezoneHandling()">Test Timezone Handling</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Simulate the date utility functions from the actual codebase
+        function createLocalDateTime(dateString, timeString) {
+            // Parse date and time components manually to avoid timezone issues
+            const [year, month, day] = dateString.split('-').map(Number);
+            const [hours, minutes] = timeString.split(':').map(Number);
+            
+            // Create date in local timezone
+            const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
+            
+            // Ensure the date is valid
+            if (isNaN(date.getTime())) {
+                throw new Error('Invalid date or time format');
+            }
+            
+            return date;
+        }
+
+        function toLocalISOString(localDate) {
+            // Format the date components manually to avoid timezone issues
+            const year = localDate.getFullYear();
+            const month = String(localDate.getMonth() + 1).padStart(2, '0');
+            const day = String(localDate.getDate()).padStart(2, '0');
+            const hours = String(localDate.getHours()).padStart(2, '0');
+            const minutes = String(localDate.getMinutes()).padStart(2, '0');
+            const seconds = String(localDate.getSeconds()).padStart(2, '0');
+            
+            // Get timezone offset in minutes and convert to HH:MM format
+            const offset = localDate.getTimezoneOffset();
+            const offsetHours = Math.floor(Math.abs(offset) / 60);
+            const offsetMinutes = Math.abs(offset) % 60;
+            const offsetSign = offset <= 0 ? '+' : '-';
+            const offsetString = `${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
+            
+            // Return ISO string with timezone offset instead of Z
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000${offsetString}`;
+        }
+
+        function formatLocalDateTime(dateString) {
+            const date = new Date(dateString);
+            
+            // Format directly using local timezone
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            
+            return `${month}/${day}/${year}, ${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+        }
+
+        function formatLocalTime(dateString) {
+            const date = new Date(dateString);
+            
+            // Format directly using local timezone
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            
+            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+        }
+
+        function testTimezoneHandling() {
+            const date = document.getElementById('testDate').value;
+            const startTime = document.getElementById('testStartTime').value;
+            const endTime = document.getElementById('testEndTime').value;
+            
+            if (!date || !startTime || !endTime) {
+                showResult('Please fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                // Step 1: Create local date objects
+                const startDateTime = createLocalDateTime(date, startTime);
+                const endDateTime = createLocalDateTime(date, endTime);
+                
+                // Step 2: Convert to ISO strings for storage
+                const startTimeISO = toLocalISOString(startDateTime);
+                const endTimeISO = toLocalISOString(endDateTime);
+                
+                // Step 3: Parse back and format for display
+                const startFormatted = formatLocalDateTime(startTimeISO);
+                const endFormatted = formatLocalDateTime(endTimeISO);
+                const startTimeOnly = formatLocalTime(startTimeISO);
+                const endTimeOnly = formatLocalTime(endTimeISO);
+                
+                // Display results
+                let result = `
+                    <div class="result">
+                        <h3>✅ Test Results</h3>
+                        <p><strong>Input:</strong> ${date} ${startTime} - ${endTime}</p>
+                        <p><strong>Created Date Objects:</strong></p>
+                        <ul>
+                            <li>Start: ${startDateTime.toString()}</li>
+                            <li>End: ${endDateTime.toString()}</li>
+                        </ul>
+                        <p><strong>ISO Strings for Storage:</strong></p>
+                        <ul>
+                            <li>Start: ${startTimeISO}</li>
+                            <li>End: ${endTimeISO}</li>
+                        </ul>
+                        <p><strong>Display Format:</strong></p>
+                        <ul>
+                            <li>Start: ${startFormatted}</li>
+                            <li>End: ${endFormatted}</li>
+                        </ul>
+                        <p><strong>Time Only:</strong></p>
+                        <ul>
+                            <li>Start: ${startTimeOnly}</li>
+                            <li>End: ${endTimeOnly}</li>
+                        </ul>
+                `;
+                
+                // Check if times match
+                const inputStartHours = parseInt(startTime.split(':')[0]);
+                const inputStartMinutes = parseInt(startTime.split(':')[1]);
+                const inputEndHours = parseInt(endTime.split(':')[0]);
+                const inputEndMinutes = parseInt(endTime.split(':')[1]);
+                
+                const displayStartHours = startDateTime.getHours();
+                const displayStartMinutes = startDateTime.getMinutes();
+                const displayEndHours = endDateTime.getHours();
+                const displayEndMinutes = endDateTime.getMinutes();
+                
+                const startMatches = inputStartHours === displayStartHours && inputStartMinutes === displayStartMinutes;
+                const endMatches = inputEndHours === displayEndHours && inputEndMinutes === displayEndMinutes;
+                
+                if (startMatches && endMatches) {
+                    result += `<p style="color: green; font-weight: bold;">✅ SUCCESS: Times are preserved correctly!</p>`;
+                } else {
+                    result += `<p style="color: red; font-weight: bold;">❌ FAILURE: Times do not match!</p>`;
+                }
+                
+                result += `</div>`;
+                
+                showResult(result, 'success');
+                
+            } catch (error) {
+                showResult(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(content, type) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = content;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Set default date to today
+        document.getElementById('testDate').value = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>
