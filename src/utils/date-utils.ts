@@ -73,7 +73,8 @@ export const toLocalISOString = (localDate: Date): string => {
   const offset = localDate.getTimezoneOffset();
   
   // Create a new date that represents the same local time in UTC
-  const utcDate = new Date(localDate.getTime() + (offset * 60000));
+  // We subtract the offset to convert from local time to UTC
+  const utcDate = new Date(localDate.getTime() - (offset * 60000));
   
   return utcDate.toISOString();
 };

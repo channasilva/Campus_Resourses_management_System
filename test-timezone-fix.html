@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timezone Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-result {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #4caf50;
+        }
+        .error {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        .info {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Timezone Fix Test</h1>
+    <p>This test verifies that booking times are handled correctly across timezone conversions.</p>
+    
+    <div class="test-container">
+        <h2>Test Time Input</h2>
+        <div class="input-group">
+            <label for="startTime">Start Time (HH:MM):</label>
+            <input type="time" id="startTime" value="08:00">
+        </div>
+        <div class="input-group">
+            <label for="endTime">End Time (HH:MM):</label>
+            <input type="time" id="endTime" value="12:30">
+        </div>
+        <div class="input-group">
+            <label for="date">Date:</label>
+            <input type="date" id="date" value="2025-12-12">
+        </div>
+        <button onclick="testTimezoneConversion()">Test Timezone Conversion</button>
+    </div>
+
+    <div class="test-container">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Replicate the date utility functions from the app
+        function createLocalDateTime(dateString, timeString) {
+            const date = new Date(`${dateString}T${timeString}:00`);
+            if (isNaN(date.getTime())) {
+                throw new Error('Invalid date or time format');
+            }
+            return date;
+        }
+
+        function toLocalISOString(localDate) {
+            const offset = localDate.getTimezoneOffset();
+            const utcDate = new Date(localDate.getTime() - (offset * 60000));
+            return utcDate.toISOString();
+        }
+
+        function formatLocalTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        function formatLocalDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString([], {
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        function testTimezoneConversion() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const date = document.getElementById('date').value;
+
+            try {
+                // Step 1: Create local date objects
+                const startDateTime = createLocalDateTime(date, startTime);
+                const endDateTime = createLocalDateTime(date, endTime);
+
+                resultsDiv.innerHTML += `
+                    <div class="test-result info">
+                        <strong>Step 1 - Input Times:</strong><br>
+                        Start: ${startTime} (${date})<br>
+                        End: ${endTime} (${date})
+                    </div>
+                `;
+
+                // Step 2: Convert to ISO strings for storage
+                const startISO = toLocalISOString(startDateTime);
+                const endISO = toLocalISOString(endDateTime);
+
+                resultsDiv.innerHTML += `
+                    <div class="test-result info">
+                        <strong>Step 2 - Stored ISO Strings:</strong><br>
+                        Start: ${startISO}<br>
+                        End: ${endISO}
+                    </div>
+                `;
+
+                // Step 3: Format back for display
+                const displayStartTime = formatLocalTime(startISO);
+                const displayEndTime = formatLocalTime(endISO);
+                const displayStartDateTime = formatLocalDateTime(startISO);
+                const displayEndDateTime = formatLocalDateTime(endISO);
+
+                resultsDiv.innerHTML += `
+                    <div class="test-result info">
+                        <strong>Step 3 - Display Times:</strong><br>
+                        Start Time: ${displayStartTime}<br>
+                        End Time: ${displayEndTime}<br>
+                        Start DateTime: ${displayStartDateTime}<br>
+                        End DateTime: ${displayEndDateTime}
+                    </div>
+                `;
+
+                // Check if times match
+                const timesMatch = displayStartTime === startTime && displayEndTime === endTime;
+                
+                if (timesMatch) {
+                    resultsDiv.innerHTML += `
+                        <div class="test-result">
+                            <strong>✅ SUCCESS:</strong> Times display correctly! The timezone fix is working.
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML += `
+                        <div class="test-result error">
+                            <strong>❌ ISSUE:</strong> Times don't match!<br>
+                            Expected: ${startTime} - ${endTime}<br>
+                            Got: ${displayStartTime} - ${displayEndTime}
+                        </div>
+                    `;
+                }
+
+                // Show timezone info
+                const timezoneOffset = new Date().getTimezoneOffset();
+                const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                
+                resultsDiv.innerHTML += `
+                    <div class="test-result info">
+                        <strong>Timezone Info:</strong><br>
+                        Timezone: ${timezoneName}<br>
+                        Offset: ${timezoneOffset} minutes (${timezoneOffset > 0 ? 'behind' : 'ahead of'} UTC)
+                    </div>
+                `;
+
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="test-result error">
+                        <strong>❌ ERROR:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Run test on page load
+        window.onload = function() {
+            testTimezoneConversion();
+        };
+    </script>
+</body>
+</html>
